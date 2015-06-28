@@ -1,0 +1,364 @@
+@charset "utf-8";
+/* 需要thickbox全局设置 */
+* {
+    padding: 0;
+    margin: 0;
+}
+
+/* thickbox具体环节,字体设置 */
+#TB_window {
+    font: 12px Arial, Helvetica, sans-serif;
+    color: #333333;
+}
+
+#TB_secondLine {
+    font: 10px Arial, Helvetica, sans-serif;
+    color: #666666;
+}
+
+#TB_window a:link {
+    color: #666666;
+}
+
+#TB_window a:visited {
+    color: #666666;
+}
+
+#TB_window a:hover {
+    color: #000;
+}
+
+#TB_window a:active {
+    color: #666666;
+}
+
+#TB_window a:focus {
+    color: #666666;
+}
+
+/* thickbox设置 */
+#TB_overlay {
+    position: fixed;
+    z-index: 100;
+    top: 0px;
+    left: 0px;
+    height: 100%;
+    width: 100%;
+}
+
+.TB_overlayMacFFBGHack {
+    background: url(../images/macFFBgHack.png) repeat;
+}
+
+.TB_overlayBG {
+    background-color: #000;
+    filter: alpha(opacity=75);
+    -moz-opacity: 0.75;
+    opacity: 0.75;
+}
+
+* html #TB_overlay {
+    position: absolute;
+    height: expression(document.body.scrollHeight > document.body.offsetHeight ? document.body.scrollHeight :document.body.offsetHeight + 'px'); /* ie6 hack */
+}
+
+* html #TB_window {
+    position: absolute;
+    margin-top: expression(0 - parseInt(this.offsetHeight / 2) + (TBWindowMargin = document.documentElement && document.documentElement.scrollTop || document.body.scrollTop) + 'px'); /* ie6 hack */
+}
+
+#TB_window {
+    position: fixed;
+    background: #ffffff;
+    z-index: 102;
+    color: #000000;
+    display: none;
+    border: 4px solid #525252;
+    text-align: left;
+    top: 50%;
+    left: 50%;
+}
+
+#TB_window img#TB_Image {
+    display: block;
+    margin: 15px 0 0 15px;
+    border-right: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
+    border-top: 1px solid #666;
+    border-left: 1px solid #666;
+}
+
+/*#TB_caption{height:25px;padding:7px 30px 10px 25px;float:left; line-height: 12px;}*/
+#TB_caption {
+    padding: 8px 25px 8px 25px;
+    float: left;
+    line-height: 12px;
+}
+
+#TB_closeWindow {
+    height: 25px;
+    padding: 11px 25px 10px 0;
+    float: right;
+}
+
+#TB_closeAjaxWindow {
+    padding: 7px 10px 5px 0;
+    margin-bottom: 1px;
+    text-align: right;
+    float: right;
+}
+
+#TB_ajaxWindowTitle {
+    float: left;
+    padding: 7px 0 5px 10px;
+    margin-bottom: 1px;
+}
+
+#TB_title {
+    background-color: #e8e8e8;
+    height: 27px;
+}
+
+#TB_ajaxContent {
+    clear: both;
+    padding: 2px 15px 15px 15px;
+    overflow: auto;
+    text-align: left;
+    line-height: 1.4em;
+}
+
+#TB_ajaxContent.TB_modal {
+    padding: 15px;
+}
+
+#TB_ajaxContent p {
+    padding: 5px 0px 5px 0px;
+}
+
+#TB_load {
+    position: fixed;
+    display: none;
+    height: 13px;
+    width: 208px;
+    z-index: 103;
+    top: 50%;
+    left: 50%;
+    margin: -6px 0 0 -104px;
+}
+
+* html #TB_load {
+    position: absolute;
+    margin-top: expression(0 - parseInt(this.offsetHeight / 2) + (TBWindowMargin = document.documentElement && document.documentElement.scrollTop || document.body.scrollTop) + 'px'); /* ie6 hack */
+}
+
+#TB_HideSelect {
+    z-index: 99;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background-color: #fff;
+    border: none;
+    filter: alpha(opacity=0);
+    -moz-opacity: 0;
+    opacity: 0;
+    height: 100%;
+    width: 100%;
+}
+
+* html #TB_HideSelect {
+    position: absolute;
+    height: expression(document.body.scrollHeight > document.body.offsetHeight ? document.body.scrollHeight :document.body.offsetHeight + 'px'); /* ie6 hack */
+}
+
+#TB_iframeContent {
+    clear: both;
+    border: none;
+    margin-bottom: -1px;
+    margin-top: 1px;
+    _margin-bottom: 1px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+}
+
+a, img {
+    border: 0;
+}
+
+body {
+    font: 12px/180% Arial, Helvetica, sans-serif, "新宋体";
+}
+
+/* gallery */
+#pageContent h2 {
+    font-size: 14px;
+    margin: 40px 0 0 0;
+    height: 28px;
+    line-height: 28px;
+    background: #eee;
+    border: solid 1px #ddd;
+    padding: 0 10px;
+    color: #3366cc;
+}
+
+#pageContent h5 {
+    font-size: 12px;
+}
+
+.anchor {
+    background: #f8f8f8;
+    padding: 10px 20px;
+    border-width: 1px;
+    border-style: solid;
+    border-color: #eeeeee #dddddd #dddddd #dddddd;
+}
+
+.anchor ul {
+    padding: 0px 15px 0 16px;
+}
+
+.anchor ul li {
+    list-style: circle inside;
+    padding: 2px 0;
+}
+
+.anchor p {
+    padding: 5px 15px 15px 15px;
+}
+
+/*content*/
+#pics {
+    height: 350px;
+    overflow: hidden
+}
+
+#pics .pic {
+    overflow: hidden;
+    margin-bottom: 20px;
+    height: 350px;
+}
+
+#pics .pic img {
+    width: 100%;
+    height: 350px;
+    overflow: hidden
+}
+
+.mask {
+    position: relative;
+    width: 100%;
+    height: 80px;
+    top: -18%;
+    background-image: url("../img/mask.png");
+    opacity: 0.6;
+    line-height: 20px;
+    color: #FFF;
+}
+
+.mask p {
+    padding: 0 15px;
+}
+
+.pic_list {
+    margin-top: 10px;
+}
+
+.pic_list ul {
+    width: 100%;
+    overflow: hidden;
+}
+
+.pic_list ul li {
+    float: left;
+    width: 25%;
+    overflow: hidden;
+}
+
+.pic_list ul li img {
+    width: 99%;
+}
+
+.pic_tag {
+    color: #c6c6c6;
+    font-size: 23px;
+    background: url(../img/icon_tag.png) no-repeat left;
+    padding-left: 9%;
+    margin: 10px 0;
+}
+
+.line {
+    border-bottom: 1px solid #e3e3e3;
+    margin-bottom: 10px;
+}
+
+#brief {
+    padding: 0 15px 15px 10px;
+    border-bottom: 1px solid #e3e3e3;
+    overflow: hidden;
+}
+
+#brief .head {
+    float: left;
+    width: 20%;
+      overflow: hidden;
+}
+
+#brief .descrion {
+    float: left;
+    padding-top: 10px;
+    width: 76%;
+    padding-left: 3%;
+    overflow: hidden;
+
+}
+
+#brief .descrion h1 {
+    font-size: 22px;
+    color: #2b2b2b;
+    padding-bottom: 20px;
+}
+
+#brief .descrion p {
+    font-size: 24px;
+    color: #898989;
+    line-height: 30px;
+}
+
+#comment {
+    background: #f8f8f8;
+}
+
+#comment ul li {
+    padding: 10px 15px 10px 15px;
+    overflow: hidden;
+    clear: both;
+    border-bottom: 1px #e3e3e3 solid;
+}
+
+#comment ul li span.head {
+    float: left;
+    width: 20%;
+    overflow: hidden;
+}
+
+#comment ul li span.comment_content {
+    float: left;
+    width: 76%;
+    font-size: 21px;
+    line-height: 30px;
+    padding-left: 3%;
+}
+
+#comment ul li span.comment_content h2 {
+    display: inline;
+    color: #2b2b2b;
+    font-size: 21px;
+}
+
+#comment ul li span.comment_content p {
+    display: inline;
+    color: #898989;
+}
