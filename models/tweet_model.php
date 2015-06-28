@@ -469,11 +469,11 @@ class Tweet_model extends CI_Model {
             $ret = $this->_redis->hset($redis_key, $tweet);
             log_message('error', 'redis ret:'.var_export($ret, true));
             if (false === $ret) {
-                log_message('update tweet redis error, tid['.$tid.']');
+                log_message('error', 'update tweet redis error, tid['.$tid.']');
             }
             $ret = $this->_redis->expire($redis_key, TWEET_CACHE_SECONDS);
             if (false === $ret) {
-                log_message('set cache time error, tid['.$tid.']');
+                log_message('error', 'set cache time error, tid['.$tid.']');
             }
         }
         return $tweet;

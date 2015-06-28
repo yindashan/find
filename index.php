@@ -58,7 +58,7 @@ if (defined('ENVIRONMENT'))
  * as this file.
  *
  */
-	$system_path = '../../ci';
+	$system_path = '../../common/ci';
 
 /*
  *---------------------------------------------------------------

@@ -49,12 +49,15 @@ $active_group = 'default';
 $active_record = TRUE;
 
 #$db['default']['hostname'] = 'rdsvz7zvunqy3y3.mysql.rds.aliyuncs.com';//test
-$db['default']['hostname'] = 'rdsjn2362jctbdvwi63h9.mysql.rds.aliyuncs.com';//ol
+#$db['default']['hostname'] = 'rdsjn2362jctbdvwi63h9.mysql.rds.aliyuncs.com';//ol
+$db['default']['hostname'] = 'localhost';//ol
 
 #$db['default']['username'] = 'bwapp';//test
-$db['default']['username'] = 'nvshen';
+#$db['default']['username'] = 'nvshen';
+$db['default']['username'] = 'root';
 #$db['default']['password'] = 'Qjvhwd34hx1cle0e6szg';
-$db['default']['password'] = 'MhxzKhl2014';
+#$db['default']['password'] = 'MhxzKhl2014';
+$db['default']['password'] = '';
 #$db['default']['database'] = 'bwapp';//test
 $db['default']['database'] = 'myb';//test
 $db['default']['dbdriver'] = 'mysql';

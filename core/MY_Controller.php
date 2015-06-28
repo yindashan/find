@@ -81,6 +81,7 @@ class MY_Controller extends CI_Controller
         }
 
         // 2. 检查TOKEN
+        /*
         if ($this->_enable_token_check) {
             //需要验证登录
             if($this->_enable_login_check) {
@@ -124,6 +125,7 @@ class MY_Controller extends CI_Controller
                 }
             }
         }
+         */
 
 
         // 3. 检查签名
