@@ -163,36 +163,8 @@ class User extends MY_Controller {
         log_message('debug', __FILE__.':'.__LINE__
             ." get_info user ".strval($se_id).' info: '.json_encode($user_info_res));
 
-        // 5. get ext info
-        // my_info: get follower, fans, approval
-        // follower and followee num
-        $user_ext_info = $this->cache_model->get_user_ext_info($uid);
-        if (false === $user_ext_info) {
-        	log_message('error', __FILE__.":".__LINE__." get_info: get_user_ext_info failed.");
-        	$user_ext_info = array(
-        			'follower_num'  => 0,
-        			'followee_num'  => 0
-        	);
-        }
-        $user_info_res = array_merge($user_info_res, $user_ext_info);
-        
-        // 6. get zan num，后续需要改进，现在未添加action过滤
-//         $this->load->model('tweet_action_model');
-//         $approval_num = $this->tweet_action_model->get_count_by_owneruid($uid);
-//         if (false === $approval_num) {
-//         	log_message('error', __METHOD__.':'.__LINE__.' get_count_by_owneruid error.');
-//         	$approval_num = 0;
-//         }
-//         $user_info_res['approval_num'] = $approval_num;
-        
-        // 7. get timeline/photo/achievement
-        $user_info_res['timeline_num'] = 23;
-        $user_info_res['photo_num'] = 11;
-        $user_info_res['achievement_num'] = 935;
-        
-        
+        // 5. get others info
         if ($own_info) {
-        	/*
             // my_info: get follower, fans, approval
             // follower and followee num
             $user_ext_info = $this->cache_model->get_user_ext_info($uid);
@@ -212,7 +184,6 @@ class User extends MY_Controller {
                 $approval_num = 0;
             }
             $user_info_res['approval_num'] = $approval_num;
-            */
         } else {
             // others_info: get follower status
             $follow_type = $this->relation_model->get_relation_info($uid, $se_id);
