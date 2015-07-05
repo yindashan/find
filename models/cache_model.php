@@ -90,6 +90,8 @@ class Cache_Model extends CI_Model {
         if (!$user_detail_info) {
             return false;
         }
+        log_message('debug', __FILE__.':'.__LINE__
+            ." get_user_detail_info ".strval($se_id).' info: '.json_encode($user_detail_info));
 
     user_detail_end:
         log_message('debug', 'wal_ice: '.strval($avatar_type));

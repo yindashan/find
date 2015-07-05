@@ -174,6 +174,10 @@ class User extends MY_Controller {
         			'followee_num'  => 0
         	);
         }
+        
+        log_message('debug', __FILE__.':'.__LINE__
+        		." get_user_ext_info ".strval($se_id).' info: '.json_encode($user_ext_info));
+        
         $user_info_res = array_merge($user_info_res, $user_ext_info);
         
         // 6. get zan num，后续需要改进，现在未添加action过滤
@@ -184,8 +188,18 @@ class User extends MY_Controller {
 //         	$approval_num = 0;
 //         }
 //         $user_info_res['approval_num'] = $approval_num;
+		
+        $this->load->model('tweet_action_model');
+        $action_type = 2; // action_type  1:发帖 2：点赞  3：分享
+        $approval_num = $this->tweet_action_model->get_count_by_owneruid($uid, $action_type);
+        if (false === $approval_num) {
+        	log_message('error', __METHOD__.':'.__LINE__.' get_count_by_owneruid error.');
+        	$approval_num = 0;
+        }
+        $user_info_res['approval_num'] = $approval_num;
         
         // 7. get timeline/photo/achievement
+        $user_info_res['sex'] = 1; // 1:男，2:女
         $user_info_res['timeline_num'] = 23;
         $user_info_res['photo_num'] = 11;
         $user_info_res['achievement_num'] = 935;

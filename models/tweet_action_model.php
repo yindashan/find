@@ -97,10 +97,11 @@ class Tweet_action_model extends CI_Model {
     /**
      * 获取用户作品被赞次数
      */
-    function get_count_by_owneruid($uid) {
+    function get_count_by_owneruid($uid, $action_type=2) {
         $this->db->select('uid');
         $this->db->from($this->table_name);
-        $this->db->where('owneruid', $uid);
+        $this->db->where('owner_id', $uid);
+        $this->db->where('action_type', $action_type);
 
         return $this->db->count_all_results();
     }
