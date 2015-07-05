@@ -28,6 +28,7 @@ class Find extends MY_Controller {
         $response['data'] = array(
             'content' => $res_content,
         );
+        log_message('debug', json_encode($response));
         end:
         $this->renderJson($response['errno'], $response['data']);
     }

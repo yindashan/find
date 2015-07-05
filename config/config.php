@@ -192,7 +192,7 @@ $config['log_threshold'] = 4;
 | application/logs/ folder. Use a full server path with trailing slash.
 |
 */
-$config['log_path'] = '../../common/log/api.meiyuanbang.com/';
+$config['log_path'] = '../../common/log/api.dingdingkantu.com/';
 
 /*
 |--------------------------------------------------------------------------
