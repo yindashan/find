@@ -4,7 +4,7 @@ class Zan extends MY_Controller {
     function __construct() {
         parent::__construct();
 
-        $this->load->model('Zan_model');
+        $this->load->model('Tweet_action_model');
         $this->load->model('Cache_model');
         $this->load->model('Tweet_model');
         $this->load->library('offclient');
@@ -20,7 +20,7 @@ class Zan extends MY_Controller {
             goto end;
         }
         $uid = $request['uid'];
-        $tid = $request['tid'];
+        $tid = intval($request['tid']);
 
         if (empty($uid) || empty($tid)) {
             $response['errno'] = STATUS_ERR_REQUEST;
@@ -46,28 +46,22 @@ class Zan extends MY_Controller {
         
         }
 
-        $ret_user_info = $this->get_user_detail_by_uid($uid, array('sname'));
-        if ($ret_user_info) {
-            $sname = $ret_user_info['sname']; 
-        } else {
-            $sname = '';
-        }
-
         $ret_tweet_info = $this->Tweet_model->get_tweet_info($tid);
         if($ret_tweet_info) {
             $owneruid = $ret_tweet_info['uid'];
         }else {
             $owneruid = 0;
-        }
+        } 
 
         $data = array(
             'uid' => $uid,
             'tid' => $tid,
-            'username' => $sname,
-            'owneruid' => $owneruid,
+            'action_type' => 2,
             'ctime' => time(),
+            'owner_id' => $owneruid,
         );
-        $ret = $this->Zan_model->add($data);
+        $ret = $this->Tweet_action_model->add($data);
+
         if (false === $ret) {
             $response['errno'] = MYSQL_ERR_INSERT;
             log_message('error', __METHOD__.':'.__LINE__. ' zan add error, uid['.$uid.'] tid['.$tid.'] errno[' . $response['errno'] .']');
@@ -80,12 +74,11 @@ class Zan extends MY_Controller {
                 $this->Cache_model->zan_add($tid, $uid);
             }
 
-            $ret = $this->Tweet_model->get_tweet_info($tid);
-            //$this->msclient->send_system_msg($uid, ms\ActionType::PRAISE, $ret['uid'], $tid);
+            //$ret = $this->Tweet_model->get_tweet_info($tid);
             $params = array();
             $params['from_uid'] = $uid;
             $params['action_type'] = offhub\SysMsgType::PRAISE;
-            $params['to_uid'] = array($ret['uid']);
+            $params['to_uid'] = array($owneruid);
             $params['content_id'] = $tid;
             $this->offclient->SendSysMsgEvent($params);
             $this->offclient->send_event($tid, offhub\EventType::ZAN);
@@ -109,7 +102,7 @@ class Zan extends MY_Controller {
             log_message('error', __METHOD__ .':'.__LINE__.' request error, errno[' . $response['errno'] .']');
             goto end;
         }
-        $ret = $this->Zan_model->remove($uid, $tid);
+        $ret = $this->Tweet_action_model->remove($uid, $tid, 2);
         if (false === $ret) {
             $response['errno'] = MYSQL_ERR_DELETE;
             log_message('error', __METHOD__ .':'.__LINE__.' zan cancel error, uid['.$uid.'] tid['.$tid.'] errno[' . $response['errno'] .']');
@@ -126,7 +119,89 @@ class Zan extends MY_Controller {
         $this->renderJson($response['errno'], $response['data']);
     }
 
-    function get_praised_list() {
+    function user_list() {
+        $request = $this->request_array;
+        $response = $this->response_array;
+        $uid = $request['uid'];
+        if (empty($uid)) {
+            $uid = 0;
+        }
+        $tid = $request['tid'];
+        $pn = isset($request['pn']) ? $request['pn']: 0;
+        $rn = isset($request['rn']) ? $request['rn']: 20;
+        if (empty($tid)) {
+            $response['errno'] = STATUS_ERR_REQUEST;
+            log_message('error', __METHOD__ .':'.__LINE__.' request error, errno[' . $response['errno'] .']');
+            goto end;
+        }
+
+        $ret = $this->Tweet_action_model->get_user_list($tid, 2, $rn, $pn*$rn);
+        $data = array();
+        foreach($ret as $id) {
+            $user_info = $this->get_user_detail_by_uid($id['uid'], array('uid','avatar','intro', 'sname'));
+            //$user_info = $this->get_user_detail_by_uid($id['uid'], '*');
+            $user_info['follow_type'] = $this->get_relation_type($id['uid'], $uid);
+            if (!empty($user_info)) {
+                $data[] = $user_info;
+            }
+        }
+
+        $response['data'] = $data;
+        end:
+        $this->renderJson($response['errno'], $response['data']);
+
+    }
+    
+    
+    /*
+     * 个人中心赞列表接口
+     */
+    function zan_list() {
+    	$request = $this->request_array;
+    	$response = $this->response_array;
+    	$uid = $request['uid'];
+    	if (empty($uid)) {
+    		$response['errno'] = STATUS_ERR_REQUEST;
+    		log_message('error', __METHOD__ .':'.__LINE__.' request error, errno[' . $response['errno'] .']');
+    		goto end;
+    	}
+    	$pn = isset($request['pn']) ? $request['pn']: 0;
+    	$rn = isset($request['rn']) ? $request['rn']: 20;
+    
+    	$ret = $this->Tweet_action_model->get_tweet_list($uid, 2, $rn, $pn*$rn);
+    	
+    	$data = array();
+    	foreach($ret as $id) {
+    		$new_user = $this->Tweet_action_model->get_new_user($id['tid']);
+    		if (!isset($new_user[0])) {
+    			continue;
+    		}
+    		$new_user_id = $new_user[0]['uid'];
+    		$new_user_ctime = $new_user[0]['ctime'];
+    		$user_info = $this->get_user_detail_by_uid($new_user_id, array('uid','avatar','intro', 'sname'));
+    		//$user_info = $this->get_user_detail_by_uid($id['uid'], '*');
+    		//$user_info['follow_type'] = $this->get_relation_type($id['uid'], $uid);
+    		$user_info['tid'] = $id['tid'];
+    		$tweet = $this->Tweet_model->get_tweet_info($id['tid']);
+    		$img_arr = json_decode($tweet['img'], true);
+    		$user_info['tweet_url'] = $img_arr[0]['n']['url'];
+    		
+    		$user_info['user_num'] = $id['user_num'];
+    		//$user_info['ctime'] = $new_user_ctime;
+    		$user_info['ctime'] = date("Y-m-d H:i:s", $new_user_ctime);
+    		if (!empty($user_info)) {
+    			$data[] = $user_info;
+    		}
+    	}
+    
+    	$response['data'] = $data;
+    	end:
+    	$this->renderJson($response['errno'], $response['data']);
+    
+    }
+    
+
+    /*function get_praised_list() {
     
         $request = $this->request_array;
         $response = $this->response_array;
@@ -174,7 +249,7 @@ class Zan extends MY_Controller {
 
         end:
         $this->renderJson($response['errno'], $response['data']);
-    }
+    }*/
 }
 
 

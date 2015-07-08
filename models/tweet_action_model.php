@@ -130,6 +130,46 @@ class Tweet_action_model extends CI_Model {
         }
         return $result->result_array();
     }
+    
+    function get_tweet_list($uid, $action_type=2, $limit, $offset) {
+    	$this->db->select('tid, count(*) as user_num');
+    	$this->db->from($this->table_name);
+    	$this->db->where('action_type', $action_type);
+    	$this->db->where('owner_id', $uid);
+    	$this->db->group_by('tid');
+    	$this->db->limit($limit, $offset);
+    
+    	$result = $this->db->get();
+    	if (false === $result ) {
+    		log_message('error', 'result:'.$result.' get_tweet_list:'.$this->db->last_query());
+    		return array();
+    	}
+    	if (0 == $result->num_rows) {
+    		log_message('error', 'get_tweet_list:'.$this->db->last_query());
+    		return array();
+    	}
+    	return $result->result_array();
+    }
+    
+    function get_new_user($tid, $limit=1, $offset=0) {
+    	$this->db->select('uid,ctime');
+    	$this->db->from($this->table_name);
+    	$this->db->where('action_type', 2);
+    	$this->db->where('tid', $tid);
+    	$this->db->order_by('ctime', 'desc');
+    	$this->db->limit($limit, $offset);
+    
+    	$result = $this->db->get();
+    	if (false === $result ) {
+    		log_message('error', 'result:'.$result.' get_new_user:'.$this->db->last_query());
+    		return array();
+    	}
+    	if (0 == $result->num_rows) {
+    		log_message('error', 'get_new_user:'.$this->db->last_query());
+    		return array();
+    	}
+    	return $result->result_array();
+    }
 
     function get_user_by_tid($tid, $action_type=2) {
         $this->db->select('uid');
