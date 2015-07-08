@@ -188,7 +188,8 @@ class Zan extends MY_Controller {
     		
     		$user_info['user_num'] = $id['user_num'];
     		//$user_info['ctime'] = $new_user_ctime;
-    		$user_info['ctime'] = date("Y-m-d H:i:s", $new_user_ctime);
+    		//$user_info['ctime'] = date("Y-m-d H:i:s", $new_user_ctime);
+    		$user_info['ctime'] = $this->format_time($new_user_ctime);
     		if (!empty($user_info)) {
     			$data[] = $user_info;
     		}
