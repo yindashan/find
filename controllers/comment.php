@@ -233,7 +233,48 @@ class Comment extends MY_Controller {
         $this->renderJson($response['errno']);
            
     }
-          
+    
+    
+    /*
+     * 个人中心评论列表接口
+    */
+    function cmt_list() {
+    	$request = $this->request_array;
+    	$response = $this->response_array;
+    	$uid = $request['uid'];
+    	if (empty($uid)) {
+    		$response['errno'] = STATUS_ERR_REQUEST;
+    		log_message('error', __METHOD__ .':'.__LINE__.' request error, errno[' . $response['errno'] .']');
+    		goto end;
+    	}
+    	$pn = isset($request['pn']) ? $request['pn']: 0;
+    	$rn = isset($request['rn']) ? $request['rn']: 20;
+    	
+    	$result = $this->Comment_model->get_list_by_uid($uid, $rn, $pn*$rn);
+    	
+    	$data = array();
+    	foreach($result as $cmt) {
+    		$uid = $cmt['uid'];
+    		$ctime = $cmt['ctime'];
+    		$user_info = $this->get_user_detail_by_uid($uid, array('uid','avatar','intro', 'sname'));
+    		$user_info['tid'] = $cmt['tid'];
+    		$tweet = $this->Tweet_model->get_tweet_info($cmt['tid']);
+    		$img_arr = json_decode($tweet['img'], true);
+    		$user_info['tweet_url'] = $img_arr[0]['n']['url'];
+    		
+    		$user_info['content'] = $cmt['content'];
+    		$user_info['ctime'] = $this->format_time($new_user_ctime);
+    		if (!empty($user_info)) {
+    			$data[] = $user_info;
+    		}
+    	}
+    
+    	$response['data'] = $data;
+    	end:
+    	$this->renderJson($response['errno'], $response['data']);
+    
+    }
+	
 }
 
 
