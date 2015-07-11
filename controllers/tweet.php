@@ -426,6 +426,100 @@ class Tweet extends MY_Controller {
             $this->tweet_delete();
         }
     }
+    
+    
+    /**
+     * 获取用户相册列表
+     *
+     */
+    function phototweet() {
+    
+    	$request = $this->request_array;
+    	log_message('debug', 'usertweet_request:'.json_encode($request));
+    	$response = $this->response_array;
+    
+    	if (!isset($request['uid'])) {
+    		$response['errno'] = STATUS_ERR_REQUEST;
+    		log_message('error', __METHOD__.':'.__LINE__.' request error, key [uid] not exist. errno[' . $response['errno'] .']');
+    		goto end;
+    	}
+    	$uid = $request['uid'];         // 用户id
+    	$rn = USER_TWEET_LIST_COUNT;           // 一页返回数量, 默认20条
+    	$type = isset($request['type']) ? $request['type'] : 'new'; // type = 'new'新页, 'next'翻页
+    	//if(empty($uid) || empty($type)) {
+    	if(empty($type)) {
+    		$response['errno'] = STATUS_ERR_REQUEST;
+    		log_message('error', __METHOD__ .':'.__LINE__.' request error, errno[' . $response['errno'] .']');
+    		goto end;
+    	}
+    
+    	//获取帖子ID列表
+    	if ('new' == $type) {
+    		// 首页
+    		$res_tid = $this->Tweet_model->get_tid_list_by_uid($uid, $rn);
+    	} else if ('next' == $type) {
+    		// 翻页
+    		if (!isset($request['last_tid'])) {
+    			$response['errno'] = STATUS_ERR_REQUEST;
+    			log_message('error', __METHOD__ .':'.__LINE__.' request error, key [last_tid] not exist. errno[' . $response['errno'] .']');
+    			goto end;
+    		}
+    		$tid = $request['last_tid'];
+    		$res_tid = $this->Tweet_model->get_next_tid_list_by_uid($uid, $tid, $rn);
+    	} else {
+    		$response['errno'] = STATUS_ERR_REQUEST;
+    		log_message('error', __METHOD__ .':'.__LINE__.' request error, key type['.$type.'] not valid. errno[' . $response['errno'] .']');
+    		goto end;
+    	}
+    	//获取失败
+    	if (false === $res_tid) {
+    		$response['errno'] = MYSQL_ERR_SELECT;
+    		log_message('error', __METHOD__ .':'.__LINE__.' get user tid list error. uid['.$uid.'] errno[' . $response['errno'] .']');
+    		goto end;
+    	}
+    
+    	//没有数据
+    	if(empty($res_tid)) {
+    		log_message('error', __METHOD__ .':'.__LINE__.' user tid list empty. tid['.$tid.'] uid['.$uid.'] errno[' . $response['errno'] .']');
+    		goto end;
+    	}
+    
+    	// 获取详情
+    	$res_content = array();
+    	foreach($res_tid as $item_tid) {
+    		$ret = $this->get_tweet_detail($item_tid['tid']);
+    		if(empty($ret) || empty($ret['imgs'])) {
+    			continue;
+    		}
+    		if (count($ret['imgs']) > 0) {
+    			$ret['imgs'] = $ret['imgs'][0];
+    		}
+    		if ($ret && 0 == intval($ret['is_del'])) {
+    			// 日期：2015年07月11日
+    			$day_ts = date("Y年m月d日", $ret['ctime']);
+    			if (!isset($res_content[$day_ts])) {
+    				$res_content[$day_ts] = array();
+    			}
+    			$res_content[$day_ts][] = array(
+											'uid' => $ret['uid'],
+											'tid' => $ret['tid'],
+											'sname' => $ret['sname'],
+											'avatar' => $ret['avatar'],
+											'resource_id' => $ret['resource_id'],
+											'ctime' => $ret['ctime'],
+											'intro' => $ret['intro'],
+											'content' => $ret['content'],
+											'img_url' => $ret['imgs']['n']['url'],
+										);
+    		}
+    	}
+    
+    	$response['data'] = array(
+			'content' => $res_content,
+    	);
+    	end:
+    	$this->renderJson($response['errno'], $response['data']);
+    }
 
 }
 
