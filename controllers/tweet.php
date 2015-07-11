@@ -487,34 +487,32 @@ class Tweet extends MY_Controller {
     	// 获取详情
     	$res_content = array();
     	foreach($res_tid as $item_tid) {
-    		$ret = $this->get_tweet_detail($item_tid['tid']);
-    		if(empty($ret) || empty($ret['imgs'])) {
-    			continue;
+    		$tid = $item_tid['tid'];
+    		$tweet = $this->Tweet_model->get_tweet_info($tid);
+    		$img_arr = json_decode($tweet['img'], true);
+    		$img_url = $img_arr[0]['n']['url'];
+    		
+    		$ctime_format = date("Y年m月d日", $tweet['ctime']);
+    		
+    		if (!isset($res_content[$ctime_format])) {
+    			$res_content[$ctime_format] = array();
     		}
-    		if (count($ret['imgs']) > 0) {
-    			$ret['imgs'] = $ret['imgs'][0];
-    		}
-    		if ($ret && 0 == intval($ret['is_del'])) {
-    			// 日期：2015年07月11日
-    			$day_ts = date("Y年m月d日", $ret['ctime']);
-    			if (!isset($res_content[$day_ts])) {
-    				$res_content[$day_ts] = array();
-    			}
-    			$res_content[$day_ts][] = array(
-											'uid' => $ret['uid'],
-											'tid' => $ret['tid'],
-											'sname' => $ret['sname'],
-											'avatar' => $ret['avatar'],
-											'resource_id' => $ret['resource_id'],
-											'ctime' => $ret['ctime'],
-											'intro' => $ret['intro'],
-											'img_url' => $ret['imgs']['n']['url'],
-										);
-    		}
+    		$res_content[$ctime_format][] = array(
+    				'tid' => $tid,
+    				'img_url' => $img_url,
+    		);
     	}
-    
+    	
+    	$data = array();
+    	foreach ($res_content as $key => $value) {
+    		$data[] = array(
+    				'ctime_format' => $key,
+    				'photo_list' => $value,
+    				);
+    	}
+    	
     	$response['data'] = array(
-			'content' => $res_content,
+			'content' => $data,
     	);
     	end:
     	$this->renderJson($response['errno'], $response['data']);
