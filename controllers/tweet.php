@@ -508,7 +508,6 @@ class Tweet extends MY_Controller {
 											'resource_id' => $ret['resource_id'],
 											'ctime' => $ret['ctime'],
 											'intro' => $ret['intro'],
-											'content' => $ret['content'],
 											'img_url' => $ret['imgs']['n']['url'],
 										);
     		}

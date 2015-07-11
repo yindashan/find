@@ -16,6 +16,8 @@ class System_message_model extends CI_Model {
             $this->db->where('sys_message_id <', $last_id);
          
         $this->db->where('is_del', 0);
+        $action_type_where = "(action_type=5 OR action_type=10 OR action_type=11)";
+        $this->db->where($action_type_where);
         $this->db->order_by('ctime', 'desc');
         $this->db->limit($limit, 0);
         $result = $this->db->get();

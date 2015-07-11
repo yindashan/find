@@ -15,6 +15,7 @@ class System_message extends MY_Controller {
         }
     }
     private $trunc_len = 125;
+    private static $schema = 'faxian';
 
     function get() {
         $request = $this->request_array;
@@ -57,7 +58,7 @@ class System_message extends MY_Controller {
                 $community = $this->get_tweet_detail($content_id);
                 $digest = $this->_trunc($community['content'], $this->trunc_len);
                 $info['digest'] = $digest;
-                $info['jump'] = 'meiyuan://tweet?tid='.$content_id;
+                $info['jump'] = self::$schema.'://tweet?tid='.$content_id;
             }
 
             if ($action_type == 2) {//回复贴子
@@ -67,7 +68,7 @@ class System_message extends MY_Controller {
                 $info['tid'] = $comment['tid'];
                 $digest = $this->_trunc($comment['content'], $this->trunc_len);
                 $info['digest'] = $digest;
-                $info['jump'] = 'meiyuan://tweet?tid='.$info['tid'];
+                $info['jump'] = self::$schema.'://tweet?tid='.$info['tid'];
             }
 
             if ($action_type == 3) {//回复评论
@@ -77,12 +78,12 @@ class System_message extends MY_Controller {
                 $info['tid'] = $comment['tid'];
                 $digest = $this->_trunc($comment['content'], $this->trunc_len);
                 $info['digest'] = $digest;
-                $info['jump'] = 'meiyuan://tweet?tid='.$info['tid'];
+                $info['jump'] = self::$schema.'://tweet?tid='.$info['tid'];
             }
 
             if ($action_type == 5) {
                 $info['action_content'] = '关注了你';
-                $info['jump'] = 'meiyuan://user?uid='.$from_uid;
+                $info['jump'] = self::$schema.'://user?uid='.$from_uid;
             }
 
             if ($action_type == 6) {
@@ -91,7 +92,22 @@ class System_message extends MY_Controller {
                 $community = $this->get_tweet_detail($content_id);
                 $digest = $this->_trunc($community['content'], $this->trunc_len);
                 $info['digest'] = $digest;
-                $info['jump'] = 'meiyuan://tweet?tid='.$info['tid'];
+                $info['jump'] = self::$schema.'://tweet?tid='.$info['tid'];
+            }
+
+            if ($action_type == 10) {//获得成就
+                $community = $this->get_tweet_detail($content_id);
+                $info['tid'] = $content_id;
+                $info['action_content'] = '你发布的照片已登上了'.$community['achievement_name'];
+                $info['imgs'] = $community['imgs'];
+                $info['jump'] = self::$schema.'://tweet?tid='.$content_id;
+            }
+            if ($action_type == 11) {//帮助别人获得成就
+                $community = $this->get_tweet_detail($content_id);
+                $info['tid'] = $content_id;
+                $info['action_content'] = '这里有一张照片已经上了'.$community['achievement_name'].'有你一份功劳快去看看呀';
+                $info['imgs'] = $community['imgs'];
+                $info['jump'] = self::$schema.'://tweet?tid='.$content_id;
             }
 
             array_push($msg_list, $info);
