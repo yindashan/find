@@ -15,8 +15,7 @@ class Tweet extends MY_Controller {
         $this->load->library('msclient');
 
         $this->load->model('Tweet_model');
-        $this->load->model('Zan_model');
-        $this->load->model('Favorite_model');
+        $this->load->model('Tweet_action_model');
 
         if (in_array($this->uri->segment(2), array('detail','detail_v2'))) {
             $this->_set_login_check(false);
@@ -31,13 +30,12 @@ class Tweet extends MY_Controller {
         $request = $this->request_array;
         $response = $this->response_array;
 
-        if(!isset($request['tid']) || !isset($request['uid'])) {
+        if(!isset($request['tid'])) {
             $response['errno'] = STATUS_ERR_REQUEST;
             log_message('error', __METHOD__ .':'.__LINE__.' request error, errno[' . $response['errno'] .']');
             goto end;
         }
         $tid = $request['tid'];
-        $uid = $request['uid'];
 
         if(empty($tid)) {
             $response['errno'] = STATUS_ERR_REQUEST;
@@ -73,22 +71,25 @@ class Tweet extends MY_Controller {
         $praise_uids = $this->Cache_model->get_zan_list($tid);
         if(false !== $praise_uids && !empty($praise_uids)) {
             foreach($praise_uids as $puid) {
-                $sname = $this->get_user_detail_by_uid($puid, 'sname');
-                if(false === $sname) {
-                    $sname = '';
+                $user_info= $this->get_user_detail_by_uid($puid, array('sname', 'avatar'));
+                if(false === $user_info['sname']) {
+                    $user_info['sname'] = '';
                 }
-                $praise_user_list[] = $sname;
+                if(false === $user_info['avatar']) {
+                    $user_info['avatar'] = '';
+                }
+                $praise_user_list[] = $user_info;
             }
         }
 
         $result['praise']['user'] = $praise_user_list; 
 
-        //获取收藏标志
-        $res_fav = $this->Favorite_model->get_favorite_by_uid_tid($uid, $tid);
-        if(false === $res_fav || empty($res_fav)) {
-            $result['fav'] = 0;
-        }else {
-            $result['fav'] = 1;
+         //获取点赞标识
+        if (isset($request['uid'])) {
+            $uid = $request['uid'];
+            $zan_dict = $this->Tweet_action_model->get_tid_dianzan_dict($uid, array($tid));
+            $praise_flag = $zan_dict[$tid];
+            $result['praise']['flag'] = $praise_flag;
         }
 
 
@@ -182,7 +183,8 @@ class Tweet extends MY_Controller {
         $result_arr = array();
         if (!isset($request['uid'])) {
             $response['errno'] = STATUS_ERR_REQUEST; 
-            log_message('error', __METHOD__ .':'.__LINE__.' request error, key [uid] not exist. errno[' . $response['errno'] .']');
+            log_message('error', __METHOD__ .':'.__LINE__
+                .' request error, key [uid] not exist. errno[' . $response['errno'] .']');
             goto end;
         }
 
@@ -198,21 +200,20 @@ class Tweet extends MY_Controller {
         
         if (!$tid) {
             $response['errno'] = STATUS_ERR_UIDCLIENT;
-            log_message('error', __METHOD__.':'.__LINE__.' get tid error, uid['.$uid.'] errno['.$response['errno'].']');
+            log_message('error', __METHOD__.':'.__LINE__
+                .' get tid error, uid['.$uid.'] errno['.$response['errno'].']');
             goto end;
         }
 
         //发表tweet
         $data = array(
-            'tid'   => $tid,
-            'uid' => $uid,
-            'img' => isset($request['imgs']) ? $request['imgs'] : "",    
-            'content' => isset($request['content']) ? $request['content'] : "",        
-            'tags' => isset($request['tags']) ? $request['tags'] : "",
-            'type' => 2,    
-            'f_catalog' => isset($request['f_catalog']) ? $request['f_catalog'] : "",
-            's_catalog' => isset($request['s_catalog']) ? $request['s_catalog'] : "",
-            'ctime' => time(),    
+            'tid'       => $tid,
+            'uid'       => $uid,
+            'content'   => isset($request['content']) ? $request['content'] : "",        
+            'ctime'     => time(),
+            'lon'       => isset($request['lon']) ? $request['lon'] : 0,
+            'lat'       => isset($request['lat']) ? $request['lat'] : 0,
+            'current_poi_name'=> isset($request['current_poi_name']) ? $request['current_poi_name'] : "",
         );
 
         $resource = array();
@@ -255,11 +256,15 @@ class Tweet extends MY_Controller {
         //用户tweet数加1
         $this->Tweet_model->tweet_add($uid);
 
-        //更新最新帖子流
-        $this->load->model('fresh_stream_model'); 
-        $this->fresh_stream_model->push($tid);
+        // 更新用户队列
+        $arr_tweet_info = array(
+            'tid'   => $tid,
+            'uid'   => $uid,
+            'msg_type'  => 0,   // new tweet
+            'timestamp' => time(),
+        );
+        $this->offclient->UpdateFriendQueue($arr_tweet_info);
 
-        
         //请求离线模块
         $res = $this->offclient->SendNewPost($data);
 
@@ -269,6 +274,50 @@ class Tweet extends MY_Controller {
             $this->renderJson($response['errno'], $response['data']);
     }
 
+    function tweet_share() {
+        $request = $this->request_array;
+        $response = $this->response_array;
+
+        $uid = $request['uid'];
+        if (empty($uid)) {//不传uid的话，没必要入库
+            log_message('error', __METHOD__ .':'.__LINE__.'no uid');
+            goto end;
+        }
+        $tid = intval($request['tid']);
+
+        if (empty($tid)) {
+            $response['errno'] = STATUS_ERR_REQUEST;
+            log_message('error', __METHOD__ .':'.__LINE__.' request error, errno[' . $response['errno'] .']');
+            goto end;
+        }
+
+        $ret_tweet_info = $this->Tweet_model->get_tweet_info($tid);
+        if($ret_tweet_info) {
+            $owneruid = $ret_tweet_info['uid'];
+        }else {
+            $owneruid = 0;
+        } 
+
+        $data = array(
+            'uid' => $uid,
+            'tid' => $tid,
+            'action_type' => 3,
+            'ctime' => time(),
+            'owner_id' => $owneruid,
+        );
+
+        $ret = $this->Tweet_action_model->add($data);
+
+        if (false === $ret) {
+            $response['errno'] = MYSQL_ERR_INSERT;
+            log_message('error', __METHOD__.':'.__LINE__. ' zan add error, uid['.$uid.'] tid['.$tid.'] errno[' . $response['errno'] .']');
+            goto end;
+
+        }
+        end:
+            $this->renderJson($response['errno'], $response['data']);
+
+    }
 
     //未使用
     private function tweet_forward() {
