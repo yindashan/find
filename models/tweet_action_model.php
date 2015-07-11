@@ -170,6 +170,63 @@ class Tweet_action_model extends CI_Model {
     	}
     	return $result->result_array();
     }
+    
+    /**
+     * 获取用户帖子ID和点赞数列表
+     *
+     * @param string uid 用户id
+     * @param int limit 每页显示条数
+     * @return array 帖子ID列表
+     */
+    function get_tweet_list_by_uid($uid, $action_type=2, $limit) {
+    	$this->db->select('tid, count(*) as user_num');
+    	$this->db->from($this->table_name);
+    	$this->db->where('action_type', $action_type);
+    	$this->db->where('owner_id', $uid);
+    	$this->db->group_by('tid');
+    	$this->db->order_by('tid', 'desc');
+    	$this->db->limit($limit);
+    	
+    	$result = $this->db->get();
+    	if (false === $result ) {
+    		log_message('error', 'result:'.$result.' get_tweet_list_by_uid:'.$this->db->last_query());
+    		return array();
+    	}
+    	if (0 == $result->num_rows) {
+    		log_message('error', 'get_tweet_list_by_uid:'.$this->db->last_query());
+    		return array();
+    	}
+    	return $result->result_array();
+    }
+    
+    /**
+     * 获取更多用户帖子ID和点赞数列表
+     *
+     * @param string uid 用户id
+     * @param int limit 每页显示条数
+     * @return array 帖子ID列表
+     */
+    function get_next_tweet_list_by_uid($uid, $action_type=2, $tid, $limit) {
+    	$this->db->select('tid, count(*) as user_num');
+    	$this->db->from($this->table_name);
+    	$this->db->where('action_type', $action_type);
+    	$this->db->where('owner_id', $uid);
+    	$this->db->where('tid <', $tid);
+    	$this->db->group_by('tid');
+    	$this->db->order_by('tid', 'desc');
+    	$this->db->limit($limit);
+    	
+    	$result = $this->db->get();
+    	if (false === $result ) {
+    		log_message('error', 'result:'.$result.' get_next_tweet_list_by_uid:'.$this->db->last_query());
+    		return array();
+    	}
+    	if (0 == $result->num_rows) {
+    		log_message('error', 'get_next_tweet_list_by_uid:'.$this->db->last_query());
+    		return array();
+    	}
+    	return $result->result_array();
+    }
 
     function get_user_by_tid($tid, $action_type=2) {
         $this->db->select('uid');

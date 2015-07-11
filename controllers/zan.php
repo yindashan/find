@@ -145,8 +145,10 @@ class Zan extends MY_Controller {
                 $data[] = $user_info;
             }
         }
-
-        $response['data'] = $data;
+		
+        $response['data'] = array(
+        	'content' => $data,
+        );
         end:
         $this->renderJson($response['errno'], $response['data']);
 
@@ -158,6 +160,7 @@ class Zan extends MY_Controller {
      */
     function zan_list() {
     	$request = $this->request_array;
+    	log_message('debug', 'zan_list_request:'.json_encode($request));
     	$response = $this->response_array;
     	$uid = $request['uid'];
     	if (empty($uid)) {
@@ -165,10 +168,32 @@ class Zan extends MY_Controller {
     		log_message('error', __METHOD__ .':'.__LINE__.' request error, errno[' . $response['errno'] .']');
     		goto end;
     	}
-    	$pn = isset($request['pn']) ? $request['pn']: 0;
-    	$rn = isset($request['rn']) ? $request['rn']: 20;
-    
-    	$ret = $this->Tweet_action_model->get_tweet_list($uid, 2, $rn, $pn*$rn);
+    	$rn = USER_TWEET_LIST_COUNT;           // 一页返回数量, 默认20条
+    	$type = isset($request['type']) ? $request['type'] : 'new'; // type = 'new'新页, 'next'翻页
+    	if(empty($type)) {
+    		$response['errno'] = STATUS_ERR_REQUEST;
+    		log_message('error', __METHOD__ .':'.__LINE__.' request error, errno[' . $response['errno'] .']');
+    		goto end;
+    	}
+    	
+    	//获取帖子ID和对应的点赞数列表
+    	if ('new' == $type) {
+    		// 首页
+    		$ret = $this->Tweet_action_model->get_tweet_list_by_uid($uid, 2, $rn);
+    	} else if ('next' == $type) {
+    		// 翻页
+    		if (!isset($request['last_tid'])) {
+    			$response['errno'] = STATUS_ERR_REQUEST;
+    			log_message('error', __METHOD__ .':'.__LINE__.' request error, key [last_tid] not exist. errno[' . $response['errno'] .']');
+    			goto end;
+    		}
+    		$tid = $request['last_tid'];
+    		$ret = $this->Tweet_action_model->get_next_tweet_list_by_uid($uid, 2, $tid, $rn);
+    	} else {
+    		$response['errno'] = STATUS_ERR_REQUEST;
+    		log_message('error', __METHOD__ .':'.__LINE__.' request error, key type['.$type.'] not valid. errno[' . $response['errno'] .']');
+    		goto end;
+    	}
     	
     	$data = array();
     	foreach($ret as $id) {
@@ -178,9 +203,7 @@ class Zan extends MY_Controller {
     		}
     		$new_user_id = $new_user[0]['uid'];
     		$new_user_ctime = $new_user[0]['ctime'];
-    		$user_info = $this->get_user_detail_by_uid($new_user_id, array('uid','avatar','intro', 'sname'));
-    		//$user_info = $this->get_user_detail_by_uid($id['uid'], '*');
-    		//$user_info['follow_type'] = $this->get_relation_type($id['uid'], $uid);
+    		$user_info = $this->get_user_detail_by_uid($new_user_id, array('uid', 'avatar', 'intro', 'sname'));
     		$user_info['tid'] = $id['tid'];
     		$tweet = $this->Tweet_model->get_tweet_info($id['tid']);
     		$img_arr = json_decode($tweet['img'], true);
@@ -194,8 +217,10 @@ class Zan extends MY_Controller {
     			$data[] = $user_info;
     		}
     	}
-    
-    	$response['data'] = $data;
+    	
+    	$response['data'] = array(
+    		'content' => $data,
+    	);
     	end:
     	$this->renderJson($response['errno'], $response['data']);
     

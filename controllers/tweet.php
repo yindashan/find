@@ -435,7 +435,7 @@ class Tweet extends MY_Controller {
     function phototweet() {
     
     	$request = $this->request_array;
-    	log_message('debug', 'usertweet_request:'.json_encode($request));
+    	log_message('debug', 'phototweet_request:'.json_encode($request));
     	$response = $this->response_array;
     
     	if (!isset($request['uid'])) {
