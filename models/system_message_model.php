@@ -34,4 +34,30 @@ class System_message_model extends CI_Model {
         $result = $this->db->get();
         return $result->result_array();
     }
+    
+    function get_comment_msg($uid, $last_id, $type, $limit=20) {
+    	$this->db->select('*');
+    	$this->db->from($this->table_name);
+    	$this->db->where('to_uid', $uid);
+    	
+    	if ($type != 'new')
+    		$this->db->where('sys_message_id <', $last_id);
+    	
+    	$this->db->where('is_del', 0);
+    	$action_type_where = "(action_type=2 OR action_type=3)";
+    	$this->db->where($action_type_where);
+    	$this->db->order_by('ctime', 'desc');
+    	$this->db->limit($limit, 0);
+    	
+    	$result = $this->db->get();
+    	if (false === $result ) {
+    		log_message('error', 'result:'.$result.' get_comment_msg:'.$this->db->last_query());
+    		return array();
+    	}
+    	if (0 == $result->num_rows) {
+    		log_message('error', 'get_comment_msg:'.$this->db->last_query());
+    		return array();
+    	}
+    	return $result->result_array();
+    }
 }

@@ -6,6 +6,7 @@ class System_message extends MY_Controller {
 
         $this->load->model('System_message_model');
         $this->load->model('Comment_model');
+        $this->load->model('Tweet_model');
     }
     private function _trunc($str, $len) {
         if (mb_strlen($str, 'utf8') > $len) {
@@ -138,5 +139,88 @@ class System_message extends MY_Controller {
         }
 
         $this->renderJson($errno,array());
+    }
+    
+    
+    /**
+     * 获取用户评论列表
+     *
+     */
+    function cmt_list() {
+    
+    	$request = $this->request_array;
+    	log_message('debug', 'cmt_list_request:'.json_encode($request));
+    	$response = $this->response_array;
+    
+    	if (!isset($request['uid'])) {
+    		$response['errno'] = STATUS_ERR_REQUEST;
+    		log_message('error', __METHOD__.':'.__LINE__.' request error, key [uid] not exist. errno[' . $response['errno'] .']');
+    		goto end;
+    	}
+    	$uid = $request['uid'];         // 用户id
+    	$rn = USER_TWEET_LIST_COUNT;           // 一页返回数量, 默认20条
+    	$type = isset($request['type']) ? $request['type'] : 'new'; // type = 'new'新页, 'next'翻页
+    	if(empty($type)) {
+    		$response['errno'] = STATUS_ERR_REQUEST;
+    		log_message('error', __METHOD__ .':'.__LINE__.' request error, errno[' . $response['errno'] .']');
+    		goto end;
+    	}
+    
+    	//获取评论列表
+    	if ('new' == $type) {
+    		// 首页
+    		$last_id = 0;
+    		$result = $this->System_message_model->get_comment_msg($uid, $last_id, $type, $rn);
+    	} else if ('next' == $type) {
+    		// 翻页
+    		if (!isset($request['last_id'])) {
+    			$response['errno'] = STATUS_ERR_REQUEST;
+    			log_message('error', __METHOD__ .':'.__LINE__.' request error, key [last_tid] not exist. errno[' . $response['errno'] .']');
+    			goto end;
+    		}
+    		$last_id = intval($request['last_id']);
+    		$result = $this->System_message_model->get_comment_msg($uid, $last_id, $type, $rn);
+    	} else {
+    		$response['errno'] = STATUS_ERR_REQUEST;
+    		log_message('error', __METHOD__ .':'.__LINE__.' request error, key type['.$type.'] not valid. errno[' . $response['errno'] .']');
+    		goto end;
+    	}
+    	//获取失败
+    	if (false === $result) {
+    		$response['errno'] = MYSQL_ERR_SELECT;
+    		log_message('error', __METHOD__ .':'.__LINE__.' get cmt_list error. uid['.$uid.'] errno[' . $response['errno'] .']');
+    		goto end;
+    	}
+    
+    	//没有数据
+    	if(empty($result)) {
+    		log_message('error', __METHOD__ .':'.__LINE__.' get cmt_list empty. tid['.$tid.'] uid['.$uid.'] errno[' . $response['errno'] .']');
+    		goto end;
+    	}
+    	
+    	// 获取详情
+    	$data = array();
+    	foreach($result as $item) {
+    		$cid = $item['content_id'];
+    		$comment = $this->Comment_model->get_detail_by_cid($cid);
+    		
+    		$user_info = $this->get_user_detail_by_uid($item['from_uid'], array('uid', 'avatar', 'intro', 'sname'));
+    		$user_info['cid'] = $comment['cid'];
+    		$user_info['content'] = $comment['content'];
+    		$tid = $comment['tid'];
+    		$user_info['tid'] = $tid;
+    		$tweet = $this->Tweet_model->get_tweet_info($tid);
+    		$img_arr = json_decode($tweet['img'], true);
+    		$user_info['tweet_url'] = $img_arr[0]['n']['url'];
+    		if (!empty($user_info)) {
+    			$data[] = $user_info;
+    		}
+    	}
+    	
+    	$response['data'] = array(
+    		'content' => $data,
+    	);
+    	end:
+    	$this->renderJson($response['errno'], $response['data']);
     }
 }
