@@ -212,6 +212,61 @@ class Tweet_model extends CI_Model {
         }
         return $result->result_array();
     }
+    
+    
+    /**
+     * 获取用户获得成就的帖子ID列表
+     *
+     * @param string uid 用户id
+     * @param int limit 每页显示条数
+     * @return array 帖子ID列表
+     */
+    function get_achieve_tid_list_by_uid($uid, $limit) {
+    
+    	$this->db->select('tid');
+    	$this->db->where('uid', $uid);
+    	$this->db->where('is_del', 0);
+    	$achieve_type_array = array(1, 2, 3);
+    	$this->db->where_in('achievement_type', $achieve_type_array);
+    	$this->db->order_by('ctime', 'desc');
+    	$this->db->limit($limit);
+    
+    	$result = $this->db->get($this->table_name);
+    	if(false === $result) {
+    		return false;
+    	}else if(0 == $result->num_rows) {
+    		return null;
+    	}
+    	return $result->result_array();
+    }
+    
+    
+    /**
+     * 获取更多用户获得成就帖子ID列表
+     *
+     * @param string uid 用户id
+     * @param int limit 每页显示条数
+     * @return array 帖子ID列表
+     */
+    function get_next_achieve_tid_list_by_uid($uid, $tid, $limit) {
+    
+    	$this->db->select('tid');
+    	$this->db->where('uid', $uid);
+    	$this->db->where('tid <', $tid);
+    	$this->db->where('is_del', 0);
+    	$achieve_type_array = array(1, 2, 3);
+    	$this->db->where_in('achievement_type', $achieve_type_array);
+    	$this->db->order_by('ctime', 'desc');
+    	$this->db->limit($limit);
+    
+    	$result = $this->db->get($this->table_name);
+    	if(false === $result) {
+    		return false;
+    	}else if(0 == $result->num_rows) {
+    		return null;
+    	}
+    	return $result->result_array();
+    }
 
     function get_tweet($tid, $fields = '*') {
         $this->db->select($fields); 
