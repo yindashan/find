@@ -6,6 +6,7 @@ class User extends MY_Controller {
     const ONE_WAY_FOLLOW = 1;
     const MUTUAL_FOLLOW = 2;
     const R_ONE_WAY_FOLLOW = 3;
+    const EMAIL_PATTERN = "/^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/";
 	/**
 	 * 构造函数
 	 *
@@ -168,45 +169,34 @@ class User extends MY_Controller {
         // follower and followee num
         $user_ext_info = $this->cache_model->get_user_ext_info($uid);
         if (false === $user_ext_info) {
-        	log_message('error', __FILE__.":".__LINE__." get_info: get_user_ext_info failed.");
-        	$user_ext_info = array(
-        			'follower_num'  => 0,
-        			'followee_num'  => 0
-        	);
+            log_message('error', __FILE__.":".__LINE__." get_info: get_user_ext_info failed.");
+            $user_ext_info = array(
+                'follower_num'  => 0,
+                'followee_num'  => 0
+            ); 
         }
-        
-        log_message('debug', __FILE__.':'.__LINE__
-        		." get_user_ext_info ".strval($se_id).' info: '.json_encode($user_ext_info));
-        
         $user_info_res = array_merge($user_info_res, $user_ext_info);
-        
-        // 6. get zan num，后续需要改进，现在未添加action过滤
-//         $this->load->model('tweet_action_model');
-//         $approval_num = $this->tweet_action_model->get_count_by_owneruid($uid);
-//         if (false === $approval_num) {
-//         	log_message('error', __METHOD__.':'.__LINE__.' get_count_by_owneruid error.');
-//         	$approval_num = 0;
-//         }
-//         $user_info_res['approval_num'] = $approval_num;
-		
+
+         
         $this->load->model('tweet_action_model');
         $action_type = 2; // action_type  1:发帖 2：点赞  3：分享
         $approval_num = $this->tweet_action_model->get_count_by_owneruid($uid, $action_type);
         if (false === $approval_num) {
-        	log_message('error', __METHOD__.':'.__LINE__.' get_count_by_owneruid error.');
-        	$approval_num = 0;
+            log_message('error', __METHOD__.':'.__LINE__.' get_count_by_owneruid error.');
+            $approval_num = 0;
         }
         $user_info_res['approval_num'] = $approval_num;
         
+		
         // 7. get timeline/photo/achievement
         $user_info_res['sex'] = 1; // 1:男，2:女
         $user_info_res['timeline_num'] = 23;
         $user_info_res['photo_num'] = 11;
         $user_info_res['achievement_num'] = 935;
-        
-        
+
+        // 5. get others info
         if ($own_info) {
-        	/*
+            /*
             // my_info: get follower, fans, approval
             // follower and followee num
             $user_ext_info = $this->cache_model->get_user_ext_info($uid);
@@ -218,14 +208,6 @@ class User extends MY_Controller {
                 );
             }
             $user_info_res = array_merge($user_info_res, $user_ext_info);
-
-            $this->load->model('zan_model');
-            $approval_num = $this->zan_model->get_count_by_owneruid($uid);
-            if (false === $approval_num) {
-                log_message('error', __METHOD__.':'.__LINE__.' get_count_by_owneruid error.');
-                $approval_num = 0;
-            }
-            $user_info_res['approval_num'] = $approval_num;
             */
         } else {
             // others_info: get follower status
@@ -279,20 +261,20 @@ class User extends MY_Controller {
         if (isset($request['sname'])) {
             $mysql_req['sname'] = $request['sname'];
         }
-        if (isset($request['province'])) {
-            $mysql_req['province'] = $request['province'];
-        }
-        if (isset($request['city'])) {
-            $mysql_req['city'] = $request['city'];
-        }
         if (isset($request['avatar'])) {
             $mysql_req['avatar'] = $request['avatar'];
         }
         if (isset($request['intro'])) {
             $mysql_req['intro'] = $request['intro'];
         }
-        if (isset($request['school'])) {
-            $mysql_req['school'] = $request['school'];
+        if (isset($request['sex'])) {
+            $mysql_req['sex'] = $request['sex'];
+        }
+
+        if (empty($mysql_req)) {
+            log_message('error', __METHOD__.':'.__LINE__.' request is empty.');
+            $this->renderJson(STATUS_ERR_REQUEST);
+            return ;
         }
 
         $ret = $this->user_model->get_user_info($uid, 'register_status');
@@ -302,12 +284,6 @@ class User extends MY_Controller {
             return ;
         }
         $register_status = intval($ret['register_status']);
-
-        if (empty($mysql_req)) {
-            log_message('error', __METHOD__.':'.__LINE__.' request is empty.');
-            $this->renderJson(STATUS_ERR_REQUEST);
-            return ;
-        }
 
         // check sname
         if (isset($mysql_req['sname'])) {
@@ -367,6 +343,7 @@ class User extends MY_Controller {
         );
 
         //用户资料修改成功后，推送绑定的tag需要对应修改
+        /*
         $this->load->library('offclient');
         $params = array();
         $params['uid'] = $uid;
@@ -382,9 +359,7 @@ class User extends MY_Controller {
             array_push($tags, 'unverify');
         }
         $params['tag_list'] = $tags;
-        $this->offclient->SetPushTagEvent($params);
-
-
+        $this->offclient->SetPushTagEvent($params);*/
 
         $this->renderJson(STATUS_OK, $this->response['data']);
 
@@ -394,8 +369,8 @@ class User extends MY_Controller {
         $request = $this->request_array;
         $response = $this->response_array;
 
-        if (!isset($request['umobile'])) {
-            log_message('error', __METHOD__.':'.__LINE__.' umobile not exist.');
+        if (!isset($request['email_addr'])) {
+            log_message('error', __METHOD__.':'.__LINE__.' email_addr not exist.');
             $this->renderJson(STATUS_ERR_REQUEST);
             return ;
         }
@@ -404,29 +379,38 @@ class User extends MY_Controller {
             $this->renderJson(STATUS_ERR_REQUEST);
             return ;
         }
+        /*
         if (!isset($request['captcha'])) {
             log_message('error', __METHOD__.':'.__LINE__.' captcha not exist.');
             $this->renderJson(STATUS_ERR_REQUEST);
             return ;
-        }
-        $umobile = $request['umobile'];
+        }*/
+        $email_addr = $request['email_addr'];
         $password = $request['password'];
-        $captcha = $request['captcha'];
+        //$captcha = $request['captcha'];
 
-        // check phone
-        $is_mobile = $this->_is_mobile_exist($umobile);
-        if (false === $is_mobile) {
-            log_message('error', __FILE__.':'.__LINE__.' get_uid_by_phone error.');
+        if (!preg_match($this::EMAIL_PATTERN, $email_addr)) {
+            log_message('debug', __METHOD__.':'.__LINE__.' email pattern not match.');
+            $this->renderJson(USER_EMAIL_VALID);
+            return ;
+        }
+        // check email
+        $is_email_exist = $this->user_model->is_user_emtail_exist($email_addr);
+        if (false === $is_email_exist) {
+            log_message('error', __METHOD__.':'.__LINE__.' is_user_emtail_exist error.');
             $this->renderJson(MYSQL_ERR_CONNECT);
             return ;
         }
-        if (1 === $is_mobile) {
-            log_message('error', __FILE__.':'.__LINE__.' user exist, phone='.$umobile);
+        if (1 === $is_email_exist) {
+            log_message('error', __METHOD__.':'.__LINE__.' user exist, email_addr='.$email_addr);
             $this->renderJson(USER_EXIST);
             return ;
         }
 
+        $this->user_model->clear_valid_user($email_addr);
+
         // load sms_model
+        /*
         $this->load->model('sms_model');
         $sms_info = $this->sms_model->get_info_by_verifycode($umobile, $captcha, 1);
         if(false === $sms_info) {
@@ -451,10 +435,10 @@ class User extends MY_Controller {
             log_message('error', __METHOD__ . ' verifycode timeout error, '
                 .'mobile['.$umobile.'] verifycode['.$captcha.'] errno[' . ERR_SMS_VERIFYCODE_TIMEOUT  .']');
             return ;
-        }
+        }*/
 
         $arr_mysql_req = array(
-            'umobile'   => $umobile,
+            'email_addr'   => $email_addr,
             'pass_word' => $password,
             'login_type'    => 0,
             'create_time'   => time(),
@@ -464,21 +448,22 @@ class User extends MY_Controller {
         // add user
         $uid = $this->user_model->add($arr_mysql_req);
         if (false === $uid) {
-            log_message('error', __FILE__.':'.__LINE__.' add_user error.');
+            log_message('error', __METHOD__.':'.__LINE__.' add_user error.');
             $this->renderJson(MYSQL_ERR_CONNECT);
             return ;
         }
         if (NULL === $uid) {
-            log_message('error', __FILE__.':'.__LINE__.' add_user not affect rows.');
+            log_message('error', __METHOD__.':'.__LINE__.' add_user not affect rows.');
             $this->renderJson(MYSQL_ERR_INSERT);
             return ;
         }
 
         // invalid captcha
+        /*
         $ret = $this->sms_model->set_captcha_invalid($umobile, 1);
         if (false === $ret) {
             log_message('error', __METHOD__.':'.__LINE__.' invalid captcha error, umobile='.$umobile);
-        }
+        }*/
 
         $this->_init_register_user($uid);
 
@@ -573,21 +558,6 @@ class User extends MY_Controller {
         $this->renderJson(STATUS_OK);
     }
 
-    function test_model() {
-        $request = $this->request_array;
-        $response = $this->response_array;
-        $errno = 0;
-        $result_arr = array();
-
-        $result = $this->user_model->delete_by_uid(46);
-        $response = $result;
-        if (false === $result) {
-            return $this->renderJson(0, "null!");
-        } else {
-            return $this->renderJson(0, $result);
-        }
-    }
-
     function verify_forgot_pass() {
         $request = $this->request_array;
         $response = $this->response_array;
@@ -637,183 +607,39 @@ class User extends MY_Controller {
         $this->renderJson(STATUS_OK);
     }
 
-    function register_user() {
-        $request = $this->request_array;
-        $response = $this->response_array;
-
-        // check keys
-        if (!isset($request['umobile'])) {
-            log_message('error', __FILE__,':'.__LINE__.' key [umobile] not exist!');
-            $this->renderJson(STATUS_ERR_REQUEST);
-            return ;
-        }
-        if (!isset($request['password'])) {
-            log_message('error', __FILE__.':'.__LINE__.' key [password] not exist!');
-            $this->renderJson(STATUS_ERR_REQUEST);
-            return ;
-        }
-        if (!isset($request['sname'])) {
-            log_message('error', __FILE__.':'.__LINE__.' key [sname] not exist!');
-            $this->renderJson(STATUS_ERR_REQUEST);
-            return ;
-        }
-        if (!isset($request['province'])) {
-            log_message('error', __FILE__.':'.__LINE__.' key [province] not exist!');
-            $this->renderJson(STATUS_ERR_REQUEST);
-            return ;
-        }
-        if (!isset($request['city'])) {
-            log_message('error', __FILE__.':'.__LINE__.' key [city] not exist!');
-            $this->renderJson(STATUS_ERR_REQUEST);
-            return ;
-        }
-        if (!isset($request['avatar'])) {
-            log_message('error', __FILE__.':'.__LINE__.' key [avatar] not exist!');
-            $this->renderJson(STATUS_ERR_REQUEST);
-            return ;
-        }
-        if (!isset($request['intro'])) {
-            log_message('error', __FILE__.':'.__LINE__.' key [intro] not exist!');
-            $this->renderJson(STATUS_ERR_REQUEST);
-            return ;
-        }
-        if (!isset($request['school'])) {
-            log_message('error', __FILE__.':'.__LINE__.' key [school] not exist!');
-            $this->renderJson(STATUS_ERR_REQUEST);
-            return ;
-        }
-
-        $umobile    = $request['umobile'];
-        $password   = $request['password'];
-        $sname  = $request['sname'];
-        $province   = $request['province'];
-        $city   = $request['city'];
-        $avatar = $request['avatar'];
-        $intro  = $request['intro'];
-        $school = $request['school'];
-        $timestamp  = time();
-
-        // update ci_user
-        $arr_user_input = array(
-            'pass_word' => $password,
-            'pass_mark' => "",
-            'umobile'   => $umobile,
-            'login_type'    => 0,
-            'oauth_type'    => NULL,
-            'oauth_key'     => NULL,
-            'create_time'   => $timestamp,
-        );
-        // check phone
-        $uid = $this->user_model->get_uid_by_phone($umobile);
-        if (false === $uid) {
-            log_message('error', __FILE__.':'.__LINE__.' get_uid_by_phone error.');
-            $this->renderJson(MYSQL_ERR_CONNECT);
-            return ;
-        }
-        if (NULL !== $uid) {
-            log_message('error', __FILE__.':'.__LINE__.' user exist, uid='.$uid.' phone='.$umobile);
-            $this->renderJson(USER_EXIST);
-            return ;
-        }
-        // check sname
-        $user_detail_res = $this->user_detail_model->get_info_by_sname($sname);
-        if (false === $user_detail_res) {
-            log_message('error', __METHOD__.':'.__LINE__.' get_info_by_sname error, sname='.$sname);
-            $this->renderJson(MYSQL_ERR_SELECT);
-            return ;
-        }
-        if (NULL !== $user_detail_res) {
-            log_message('error', __METHOD__.':'.__LINE__.' sname exist, sname='.$sname);
-            $this->renderJson(USER_SNAME_EXIST);
-            return ;
-        }
-        // add user
-        $uid = $this->user_model->add($arr_user_input);
-        if (false === $uid) {
-            log_message('error', __FILE__.':'.__LINE__.' add_user error.');
-            $this->renderJson(MYSQL_ERR_CONNECT);
-            return ;
-        }
-        if (NULL === $uid) {
-            log_message('error', __FILE__.':'.__LINE__.' add_user not affect rows.');
-            $this->renderJson(MYSQL_ERR_INSERT);
-            return ;
-        }
-        // update ci_user_detail
-        $arr_user_detail_input = array(
-            'uid'   => $uid,
-            'sname' => $sname,
-            'avatar'    => $avatar,
-            'province'  => $province,
-            'city'      => $city,
-            'intro'     => $intro,
-            'school'    => $school,
-        );
-        $user_detail_res = $this->user_detail_model->add($arr_user_detail_input);
-        if (false === $user_detail_res) {
-            log_message('error', __FILE__.':'.__LINE__.' add_user_detail error.');
-            $this->renderJson(MYSQL_ERR_CONNECT);
-            return ;
-        }
-        if (NULL === $user_detail_res) {
-            log_message('error', __FILE__.':'.__LINE__.' add_user_detail not affect rows.');
-            $this->renderJson(MYSQL_ERR_INSERT);
-            return ;
-        }
-
-        // set user_ext info
-        $this->load->model('cache_model');
-        $this->cache_model->get_user_ext_info($uid);
-
-        // return info
-        $arr_response = $this->get_user_detail_by_uid($uid);
-        if (false === $arr_response) {
-            log_message('error', __FILE__.':'.__LINE__.' user_detail get_user_detail_by_uid error.');
-            $this->renderJson(MYSQL_ERR_SELECT);
-            return ;
-        }
-
-        //TODO: return which avatar, need adjusted
-
-        $response['errno'] = 0;
-        $response['data'] = $arr_response;
-
-        $this->renderJson($response['errno'], $response['data']);
-    }
-
     function normal_login() {
         $request = $this->request_array;
         $response = $this->response_array;
 
-        if (!isset($request['umobile'])) {
-            log_message('error', __FILE__.':'.__LINE__.' key [umobile] not exist!');
+        if (!isset($request['email_addr'])) {
+            log_message('error', __METHOD__.':'.__LINE__.' key [email_addr] not exist!');
             $this->renderJson(STATUS_ERR_REQUEST);
             return ;
         }
         if (!isset($request['password'])) {
-            log_message('error', __FILE__.':'.__LINE__.' key [password] not exist!');
+            log_message('error', __METHOD__.':'.__LINE__.' key [password] not exist!');
             $this->renderJson(STATUS_ERR_REQUEST);
             return ;
         }
-        $umobile = $request['umobile'];
+        $email_addr = $request['email_addr'];
         $password = $request['password'];
 
-        $result = $this->user_model->get_user_by_phone($umobile);
+        $result = $this->user_model->get_user_by_email_addr($email_addr);
         if (false === $result) {
-            log_message('error', __FILE__.':'.__LINE__.' get_user_by_phone error.');
+            log_message('error', __METHOD__.':'.__LINE__.' get_user_by_email_addr error.');
             $this->renderJson(MYSQL_ERR_CONNECT);
             return ;
         }
         if (NULL === $result) {
-            log_message('error', __FILE__.':'.__LINE__.' get_user_by_phone not found.');
+            log_message('error', __METHOD__.':'.__LINE__.' get_user_by_email_addr not found.');
             $this->renderJson(USER_NOT_EXIST);
             return ;
         }
 
         $uid = $result['id'];
         $right_pass = $result['pass_word'];
-        if ($password != $right_pass) {
-            log_message('debug', __FILE__.':'.__LINE__.' password not correct.');
+        if ($password !== $right_pass) {
+            log_message('debug', __METHOD__.':'.__LINE__.' password not correct.');
             $this->renderJson(USER_ERR_PASS);
             return ;
         }
@@ -822,7 +648,7 @@ class User extends MY_Controller {
         if (0 !== $register_status) {
             switch ($register_status) {
             case 2:
-                log_message('error', __METHOD__.':'.__LINE__.' register_status error, stt='.$register_status);
+                log_message('error', __METHOD__.':'.__LINE__.' user detail lacked, status='.$register_status);
                 $this->renderJson(USER_DETAIL_LACK);
                 return ;
             default:
@@ -833,24 +659,15 @@ class User extends MY_Controller {
         }
 
         // return info
-        $arr_response = $this->get_user_detail_by_uid($uid);
-        if (false === $arr_response) {
-            log_message('error', __FILE__.':'.__LINE__.' user_detail get_user_detail_by_uid error.');
-            $this->renderJson(MYSQL_ERR_SELECT);
-            return ;
-        }
-        if (NULL === $arr_response) {
-            log_message('error', __FILE__.':'.__LINE__.' user_detail '.strval($uid).' not exist!');
-            $this->renderJson(MYSQL_ERR_SELECT);
-            return ;
-        }
+        $arr_response = array();
+        $arr_response['data'] = array(
+            'uid'   => $uid,
+        );
 
         // TODO: need ip
         $user_token = $this->create_token($uid, '');
         if (false === $user_token) {
-            log_message('error', __METHOD__.' create_token failed, uid='.strval($uid));
-            //$this->renderJson(TOKEN_CREATE_ERR);
-            //return ;
+            log_message('error', __METHOD__.':'.__LINE__.' create_token failed, uid='.strval($uid));
         }
         $arr_response['token'] = $user_token;
 
@@ -916,12 +733,12 @@ class User extends MY_Controller {
         $is_new = false;
         $uid = $this->user_model->get_uid_by_oauth($arr_user_req['oauth_type'], $arr_user_req['oauth_key']);
         if (false === $uid) {
-            log_message('error', __FILE__.':'.__LINE__.' get_uid_by_oauth error.');
+            log_message('error', __METHOD__.':'.__LINE__.' get_uid_by_oauth error.');
             $this->renderJson(MYSQL_ERR_CONNECT);
             return ;
         }
         if (NULL === $uid) {
-            log_message('debug', __FILE__.':'.__LINE__.' it\'s a new user.');
+            log_message('debug', __METHOD__.':'.__LINE__.' it\'s a new user.');
             $is_new = true;
         }
 
@@ -934,12 +751,12 @@ class User extends MY_Controller {
             // get base info
             $uid = $this->user_model->add($arr_user_req);
             if (false === $uid) {
-                log_message('error', __FILE__.':'.__LINE__.' add_user error.');
+                log_message('error', __METHOD__.':'.__LINE__.' add_user error.');
                 $this->renderJson(MYSQL_ERR_CONNECT);
                 return ;
             }
             if (NULL === $uid) {
-                log_message('error', __FILE__.':'.__LINE__.' add_user not affect rows.');
+                log_message('error', __METHOD__.':'.__LINE__.' add_user not affect rows.');
                 $this->renderJson(MYSQL_ERR_INSERT);
                 return ;
             }
@@ -961,6 +778,7 @@ class User extends MY_Controller {
         }
 
         // get detail info
+        /*
         $arr_user_detail = $this->get_user_detail_by_uid($uid);
         if (false === $arr_user_detail) {
             log_message('error', __FILE__.':'.__LINE__.' user_detail get_user_detail_by_uid error, uid='.$uid);
@@ -971,7 +789,7 @@ class User extends MY_Controller {
             log_message('error', __FILE__.':'.__LINE__.' user_detail not affect rows, uid='.$uid);
             $this->renderJson(MYSQL_ERR_INSERT);
             return ;
-        }
+        }*/
 
         // TODO: need ip
         $user_token = $this->create_token($uid, '');
@@ -980,11 +798,12 @@ class User extends MY_Controller {
             //$this->renderJson(TOKEN_CREATE_ERR);
             //return ;
         }
-        $arr_user_detail['token'] = $user_token;
-
         // return info
         $response['errno'] = 0;
-        $response['data'] = $arr_user_detail;
+        $response['data'] = array(
+            'uid'   => $uid,
+            'token' => $user_token,
+        );
 
         $this->renderJson($response['errno'], $response['data']);
     }

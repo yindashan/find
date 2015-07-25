@@ -11,6 +11,45 @@ class User_model extends CI_Model {
 		parent::__construct();
     }
 
+    function clear_valid_user($email_addr) {
+        $this->db->where('email_addr', $email_addr);
+        $this->db->where('register_status != 0');
+        $this->db->where('is_valid = 0');
+        $this->db->delete($this->table_name);
+    }
+
+    function is_user_emtail_exist($email_addr) {
+        $this->db->select('id');
+        $this->db->where('email_addr', $email_addr);
+        $this->db->where('register_status = 0');
+        $this->db->where('is_valid = 0');
+        $result = $this->db->get($this->table_name);
+        if (false === $result) {
+            return false;
+        }
+        if (0 < $result->num_rows) {
+            return 1;
+        }
+        return 0;
+    }
+
+    function get_user_by_email_addr($email_addr, $fields = '*') {
+        $this->db->select($fields);
+        $this->db->where('email_addr', $email_addr);
+        $this->db->where('register_status = 0');
+        $this->db->where('is_valid = 0');
+        $this->db->limit(1);
+        $result = $this->db->get($this->table_name);
+        if (false === $result) {
+            return false;
+        }
+        if (0 < $result->num_rows) {
+            return $result->result_array()[0];
+        }
+
+        return NULL;
+    }
+
     function get_user_by_phone($phone, $fields = '*') {
         $this->db->select($fields);
         $this->db->where('umobile', $phone);
