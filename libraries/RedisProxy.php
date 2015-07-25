@@ -305,6 +305,20 @@ class RedisProxy {
             return false;
         } 
     }
+    public function zrevrange($key, $start, $stop, $withscores = false) {
+        try {
+            $ret = $this->_redis->zRevRange($key, $start, $stop, $withscores);
+            $err = $this->_redis->getLastError();
+            if (false === $ret) {
+                log_message('error', __METHOD__.':'.__LINE__.'redis error zrevrange:['.$err.']');
+            }
+            return $ret;
+        } catch (Exception $e) {
+            log_message('error', __METHOD__.':'.__LINE__
+                .' redis exception zrevrange: ['.$e.getMessage().']');
+        }
+        return false;
+    }
 
     public function zrem($key, $member) {
         try {
@@ -331,6 +345,16 @@ class RedisProxy {
             log_message('error', 'redis exception smembers: ['.$e->getMessage().']');
             return false;
         } 
+    }
+
+    public function zcard($key) {
+        try {
+            return $this->_redis->zcard($key);
+        } catch (Exception $e) {
+            log_message('error', 'redis exception zcard: ['.$e->getMessage().']');
+            return false;
+        }
+        return false;
     }
 
     public function zscore($key, $member) {

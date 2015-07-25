@@ -10,8 +10,16 @@ class Message_Queue_Model {
         $this->_redis = RedisProxy::get_instance('db_redis');
     }
 
+    function get_follow_message($uid) {
+        return $this->_redis->zrevrange(FOLLOW_MSG_PREFIX.$uid, 0, -1, true);
+    }
+
     function get_user_message($uid) {
-        return $this->_redis->lrange(USER_MSG_POSTFIX . $uid, 0, -1);
+        return $this->_redis->zrevrange(USER_MSG_PREFIX.$uid, 0, -1, true);
+    }
+
+    function get_user_queue_size($uid) {
+        return $this->_redis->zcard(USER_MSG_PREFIX.$uid);
     }
 
     function get_rec_message() {

@@ -10,5 +10,5 @@ $db_redis = array();
 // $db_redis['host'] = 'mhback1';
 // $db_redis['port'] = 8888;
 $db_redis['host'] = 'localhost';
-$db_redis['port'] = 6380;
+$db_redis['port'] = 6379;
 $config['db_redis'] = $db_redis;

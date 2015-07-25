@@ -406,6 +406,20 @@ class Tweet_model extends CI_Model {
     }
 
     /**
+     * 获取用户成就数
+     *
+     * @param int uid
+     */
+    function get_achieve_tweet_num($uid) {
+        $this->db->where('uid', $uid);
+        $this->db->where('is_del', 0);
+        $achieve_type_array = array(1, 2, 3);
+        $this->db->where_in('achievement_type', $achieve_type_array);
+        $this->db->from($this->table_name);
+        return $this->db->count_all_results();
+    }
+
+    /**
      * Redis操作
      */
     function get_tweet_info($tid) {

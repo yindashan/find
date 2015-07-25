@@ -21,6 +21,8 @@ class User extends MY_Controller {
         $this->load->model('user_model');
         $this->load->model('user_detail_model');
         $this->load->model('user_token_model');
+        $this->load->model('tweet_model');
+        $this->load->model('message_queue_model');
 
         if (in_array($this->uri->segment(2), array('get_info'))) {
             $this->_set_token_check(true);
@@ -189,10 +191,13 @@ class User extends MY_Controller {
         
 		
         // 7. get timeline/photo/achievement
-        $user_info_res['sex'] = 1; // 1:男，2:女
-        $user_info_res['timeline_num'] = 23;
-        $user_info_res['photo_num'] = 11;
-        $user_info_res['achievement_num'] = 935;
+        //$user_info_res['sex'] = 1; // 1:男，2:女 user_ext_info里面已包含sex信息
+        //$user_info_res['timeline_num'] = 23;
+        //$user_info_res['photo_num'] = 11;
+        //$user_info_res['achievement_num'] = 935;
+        $user_info_res['timeline_num'] = $this->message_queue_model->get_user_queue_size($uid);
+        $user_info_res['photo_num'] = $this->tweet_model->get_tweet_num($uid);
+        $user_info_res['achievement_num'] = $this->tweet_model->get_achieve_tweet_num($uid);
 
         // 5. get others info
         if ($own_info) {
