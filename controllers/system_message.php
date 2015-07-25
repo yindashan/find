@@ -207,6 +207,7 @@ class System_message extends MY_Controller {
     		$user_info = $this->get_user_detail_by_uid($item['from_uid'], array('uid', 'avatar', 'intro', 'sname'));
     		$user_info['cid'] = $comment['cid'];
     		$user_info['content'] = $comment['content'];
+    		$user_info['ctime'] = $comment['ctime'];
     		$tid = $comment['tid'];
     		$user_info['tid'] = $tid;
     		$tweet = $this->Tweet_model->get_tweet_info($tid);
