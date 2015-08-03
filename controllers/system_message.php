@@ -213,6 +213,17 @@ class System_message extends MY_Controller {
     		$tweet = $this->Tweet_model->get_tweet_info($tid);
     		$img_arr = json_decode($tweet['img'], true);
     		$user_info['tweet_url'] = $img_arr[0]['n']['url'];
+    		
+    		$reply_uid = intval($comment['reply_uid']);
+    		if($reply_uid > 0) {
+    			$reply_user_info = $this->get_user_detail_by_uid($reply_uid, array('uid', 'avatar', 'intro', 'sname'));
+    			$user_info['reply_uid'] = $reply_uid;
+    			$user_info['reply_sname'] = $reply_user_info['sname'];
+    		} else {
+    			$user_info['reply_uid'] = $user_info['uid'];
+    			$user_info['reply_sname'] = $user_info['sname'];
+    		}
+    		
     		if (!empty($user_info)) {
     			$data[] = $user_info;
     		}
