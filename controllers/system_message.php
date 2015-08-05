@@ -211,7 +211,7 @@ class System_message extends MY_Controller {
     		$tid = $comment['tid'];
     		$user_info['tid'] = $tid;
     		$tweet = $this->Tweet_model->get_tweet_info($tid);
-    		$img_arr = json_decode($tweet['img'], true);
+    		$img_arr = json_decode($tweet['imgs'], true);
     		$user_info['tweet_url'] = $img_arr[0]['n']['url'];
     		
     		$reply_uid = intval($comment['reply_uid']);

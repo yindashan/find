@@ -206,7 +206,7 @@ class Zan extends MY_Controller {
     		$user_info = $this->get_user_detail_by_uid($new_user_id, array('uid', 'avatar', 'intro', 'sname'));
     		$user_info['tid'] = $id['tid'];
     		$tweet = $this->Tweet_model->get_tweet_info($id['tid']);
-    		$img_arr = json_decode($tweet['img'], true);
+    		$img_arr = json_decode($tweet['imgs'], true);
     		$user_info['tweet_url'] = $img_arr[0]['n']['url'];
     		
     		$user_info['user_num'] = $id['user_num'];

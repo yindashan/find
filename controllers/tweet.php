@@ -489,7 +489,7 @@ class Tweet extends MY_Controller {
     	foreach($res_tid as $item_tid) {
     		$tid = $item_tid['tid'];
     		$tweet = $this->Tweet_model->get_tweet_info($tid);
-    		$img_arr = json_decode($tweet['img'], true);
+    		$img_arr = json_decode($tweet['imgs'], true);
     		$img_url = $img_arr[0]['n']['url'];
     		
     		$ctime_format = date("Y年m月d日", $tweet['ctime']);
@@ -580,7 +580,7 @@ class Tweet extends MY_Controller {
     	foreach($res_tid as $item_tid) {
     		$tid = $item_tid['tid'];
     		$tweet = $this->Tweet_model->get_tweet_info($tid);
-    		$img_arr = json_decode($tweet['img'], true);
+    		$img_arr = json_decode($tweet['imgs'], true);
     		$img_url = $img_arr[0]['n']['url'];
     		
     		$res_content[] = array(
