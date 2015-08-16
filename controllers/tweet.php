@@ -587,7 +587,7 @@ class Tweet extends MY_Controller {
     				'tid' => $tid,
     				'img_url' => $img_url,
     				'achievement_type' => $tweet['achievement_type'],
-    				'achievement_level' => '1',
+    				'achievement_level' => $tweet['achievement_level'],
     				'achievement_name' => $tweet['achievement_name'],
     				'achievement_ctime' => $tweet['achievement_ctime'],
     		);
