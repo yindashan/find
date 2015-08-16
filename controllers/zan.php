@@ -82,6 +82,7 @@ class Zan extends MY_Controller {
             $params['content_id'] = $tid;
             $this->offclient->SendSysMsgEvent($params);
             $this->offclient->send_event($tid, offhub\EventType::ZAN);
+            $this->offclient->UpdateFriendQueue(array('uid'=>$uid, 'tid'=>$tid, 'msg_type'=>1));
         }
         end:
         $this->renderJson($response['errno'], $response['data']);
@@ -141,91 +142,90 @@ class Zan extends MY_Controller {
             $user_info = $this->get_user_detail_by_uid($id['uid'], array('uid','avatar','intro', 'sname'));
             //$user_info = $this->get_user_detail_by_uid($id['uid'], '*');
             $user_info['follow_type'] = $this->get_relation_type($id['uid'], $uid);
+            $user_info['ctime'] = intval($id['ctime']);
             if (!empty($user_info)) {
                 $data[] = $user_info;
             }
         }
-		
+
         $response['data'] = array(
-        	'content' => $data,
+            'content' => $data,
         );
         end:
         $this->renderJson($response['errno'], $response['data']);
 
     }
-    
-    
-    /*
-     * 个人中心赞列表接口
-     */
+
+   /*
+    * 个人中心赞列表接口
+    */
     function zan_list() {
-    	$request = $this->request_array;
-    	log_message('debug', 'zan_list_request:'.json_encode($request));
-    	$response = $this->response_array;
-    	$uid = $request['uid'];
-    	if (empty($uid)) {
-    		$response['errno'] = STATUS_ERR_REQUEST;
-    		log_message('error', __METHOD__ .':'.__LINE__.' request error, errno[' . $response['errno'] .']');
-    		goto end;
-    	}
-    	$rn = USER_TWEET_LIST_COUNT;           // 一页返回数量, 默认20条
-    	$type = isset($request['type']) ? $request['type'] : 'new'; // type = 'new'新页, 'next'翻页
-    	if(empty($type)) {
-    		$response['errno'] = STATUS_ERR_REQUEST;
-    		log_message('error', __METHOD__ .':'.__LINE__.' request error, errno[' . $response['errno'] .']');
-    		goto end;
-    	}
-    	
-    	//获取帖子ID和对应的点赞数列表
-    	if ('new' == $type) {
-    		// 首页
-    		$ret = $this->Tweet_action_model->get_tweet_list_by_uid($uid, 2, $rn);
-    	} else if ('next' == $type) {
-    		// 翻页
-    		if (!isset($request['last_tid'])) {
-    			$response['errno'] = STATUS_ERR_REQUEST;
-    			log_message('error', __METHOD__ .':'.__LINE__.' request error, key [last_tid] not exist. errno[' . $response['errno'] .']');
-    			goto end;
-    		}
-    		$tid = $request['last_tid'];
-    		$ret = $this->Tweet_action_model->get_next_tweet_list_by_uid($uid, 2, $tid, $rn);
-    	} else {
-    		$response['errno'] = STATUS_ERR_REQUEST;
-    		log_message('error', __METHOD__ .':'.__LINE__.' request error, key type['.$type.'] not valid. errno[' . $response['errno'] .']');
-    		goto end;
-    	}
-    	
-    	$data = array();
-    	foreach($ret as $id) {
-    		$new_user = $this->Tweet_action_model->get_new_user($id['tid']);
-    		if (!isset($new_user[0])) {
-    			continue;
-    		}
-    		$new_user_id = $new_user[0]['uid'];
-    		$new_user_ctime = $new_user[0]['ctime'];
-    		$user_info = $this->get_user_detail_by_uid($new_user_id, array('uid', 'avatar', 'intro', 'sname'));
-    		$user_info['tid'] = $id['tid'];
-    		$tweet = $this->Tweet_model->get_tweet_info($id['tid']);
-    		$img_arr = json_decode($tweet['imgs'], true);
-    		$user_info['tweet_url'] = $img_arr[0]['n']['url'];
-    		
-    		$user_info['user_num'] = $id['user_num'];
-    		$user_info['ctime'] = $new_user_ctime;
-    		//$user_info['ctime'] = date("Y-m-d H:i:s", $new_user_ctime);
-    		//$user_info['ctime'] = $this->format_time($new_user_ctime);
-    		if (!empty($user_info)) {
-    			$data[] = $user_info;
-    		}
-    	}
-    	
-    	$response['data'] = array(
-    		'content' => $data,
-    	);
-    	end:
-    	$this->renderJson($response['errno'], $response['data']);
+        $request = $this->request_array;
+        log_message('debug', 'zan_list_request:'.json_encode($request));
+        $response = $this->response_array;
+        $uid = $request['uid'];
+        if (empty($uid)) {
+            $response['errno'] = STATUS_ERR_REQUEST;
+            log_message('error', __METHOD__ .':'.__LINE__.' request error, errno[' . $response['errno'] .']');
+            goto end;
+        }
+        $rn = USER_TWEET_LIST_COUNT;           // 一页返回数量, 默认20条
+        $type = isset($request['type']) ? $request['type'] : 'new'; // type = 'new'新页, 'next'翻页
+        if(empty($type)) {
+            $response['errno'] = STATUS_ERR_REQUEST;
+            log_message('error', __METHOD__ .':'.__LINE__.' request error, errno[' . $response['errno'] .']');
+            goto end;
+        }
+        
+        //获取帖子ID和对应的点赞数列表
+        if ('new' == $type) {
+            // 首页
+            $ret = $this->Tweet_action_model->get_tweet_list_by_uid($uid, 2, $rn);
+        } else if ('next' == $type) {
+            // 翻页
+            if (!isset($request['last_tid'])) {
+                $response['errno'] = STATUS_ERR_REQUEST;
+                log_message('error', __METHOD__ .':'.__LINE__.' request error, key [last_tid] not exist. errno[' . $response['errno'] .']');
+                goto end;
+            }
+            $tid = $request['last_tid'];
+            $ret = $this->Tweet_action_model->get_next_tweet_list_by_uid($uid, 2, $tid, $rn);
+        } else {
+            $response['errno'] = STATUS_ERR_REQUEST;
+            log_message('error', __METHOD__ .':'.__LINE__.' request error, key type['.$type.'] not valid. errno[' . $response['errno'] .']');
+            goto end;
+        }
+        
+        $data = array();
+        foreach($ret as $id) {
+            $new_user = $this->Tweet_action_model->get_new_user($id['tid']);
+            if (!isset($new_user[0])) {
+                continue;
+            }
+            $new_user_id = $new_user[0]['uid'];
+            $new_user_ctime = $new_user[0]['ctime'];
+            $user_info = $this->get_user_detail_by_uid($new_user_id, array('uid', 'avatar', 'intro', 'sname'));
+            $user_info['tid'] = $id['tid'];
+            $tweet = $this->Tweet_model->get_tweet_info($id['tid']);
+            $img_arr = json_decode($tweet['imgs'], true);
+            $user_info['tweet_url'] = $img_arr[0]['n']['url'];
+            
+            $user_info['user_num'] = $id['user_num'];
+            $user_info['ctime'] = $new_user_ctime;
+            //$user_info['ctime'] = date("Y-m-d H:i:s", $new_user_ctime);
+            //$user_info['ctime'] = $this->format_time($new_user_ctime);
+            if (!empty($user_info)) {
+                $data[] = $user_info;
+            }
+        }
+        
+        $response['data'] = array(
+            'content' => $data,
+        );
+        end:
+        $this->renderJson($response['errno'], $response['data']);
     
-    }
-    
+    } 
 
     /*function get_praised_list() {
     

@@ -197,27 +197,7 @@ class TweetStruct {
   /**
    * @var string
    */
-  public $title = "";
-  /**
-   * @var string
-   */
   public $content = "";
-  /**
-   * @var string
-   */
-  public $tags = "";
-  /**
-   * @var int
-   */
-  public $type = null;
-  /**
-   * @var string
-   */
-  public $f_catalog = null;
-  /**
-   * @var string
-   */
-  public $s_catalog = null;
   /**
    * @var int
    */
@@ -230,6 +210,30 @@ class TweetStruct {
    * @var string
    */
   public $resource_id = null;
+  /**
+   * @var double
+   */
+  public $score = null;
+  /**
+   * @var double
+   */
+  public $lon = null;
+  /**
+   * @var double
+   */
+  public $lat = null;
+  /**
+   * @var int
+   */
+  public $achievement_type = null;
+  /**
+   * @var string
+   */
+  public $achievement_name = null;
+  /**
+   * @var string
+   */
+  public $current_poi_name = null;
   /**
    * @var \offhub\ResourceStruct[]
    */
@@ -247,42 +251,46 @@ class TweetStruct {
           'type' => TType::I32,
           ),
         3 => array(
-          'var' => 'title',
-          'type' => TType::STRING,
-          ),
-        4 => array(
           'var' => 'content',
           'type' => TType::STRING,
           ),
-        5 => array(
-          'var' => 'tags',
-          'type' => TType::STRING,
-          ),
-        6 => array(
-          'var' => 'type',
-          'type' => TType::I32,
-          ),
-        7 => array(
-          'var' => 'f_catalog',
-          'type' => TType::STRING,
-          ),
-        8 => array(
-          'var' => 's_catalog',
-          'type' => TType::STRING,
-          ),
-        9 => array(
+        4 => array(
           'var' => 'ctime',
           'type' => TType::I64,
           ),
-        10 => array(
+        5 => array(
           'var' => 'dtime',
           'type' => TType::I64,
           ),
-        11 => array(
+        6 => array(
           'var' => 'resource_id',
           'type' => TType::STRING,
           ),
+        7 => array(
+          'var' => 'score',
+          'type' => TType::DOUBLE,
+          ),
+        8 => array(
+          'var' => 'lon',
+          'type' => TType::DOUBLE,
+          ),
+        9 => array(
+          'var' => 'lat',
+          'type' => TType::DOUBLE,
+          ),
+        10 => array(
+          'var' => 'achievement_type',
+          'type' => TType::I32,
+          ),
+        11 => array(
+          'var' => 'achievement_name',
+          'type' => TType::STRING,
+          ),
         12 => array(
+          'var' => 'current_poi_name',
+          'type' => TType::STRING,
+          ),
+        13 => array(
           'var' => 'resources',
           'type' => TType::LST,
           'etype' => TType::STRUCT,
@@ -300,23 +308,8 @@ class TweetStruct {
       if (isset($vals['uid'])) {
         $this->uid = $vals['uid'];
       }
-      if (isset($vals['title'])) {
-        $this->title = $vals['title'];
-      }
       if (isset($vals['content'])) {
         $this->content = $vals['content'];
-      }
-      if (isset($vals['tags'])) {
-        $this->tags = $vals['tags'];
-      }
-      if (isset($vals['type'])) {
-        $this->type = $vals['type'];
-      }
-      if (isset($vals['f_catalog'])) {
-        $this->f_catalog = $vals['f_catalog'];
-      }
-      if (isset($vals['s_catalog'])) {
-        $this->s_catalog = $vals['s_catalog'];
       }
       if (isset($vals['ctime'])) {
         $this->ctime = $vals['ctime'];
@@ -326,6 +319,24 @@ class TweetStruct {
       }
       if (isset($vals['resource_id'])) {
         $this->resource_id = $vals['resource_id'];
+      }
+      if (isset($vals['score'])) {
+        $this->score = $vals['score'];
+      }
+      if (isset($vals['lon'])) {
+        $this->lon = $vals['lon'];
+      }
+      if (isset($vals['lat'])) {
+        $this->lat = $vals['lat'];
+      }
+      if (isset($vals['achievement_type'])) {
+        $this->achievement_type = $vals['achievement_type'];
+      }
+      if (isset($vals['achievement_name'])) {
+        $this->achievement_name = $vals['achievement_name'];
+      }
+      if (isset($vals['current_poi_name'])) {
+        $this->current_poi_name = $vals['current_poi_name'];
       }
       if (isset($vals['resources'])) {
         $this->resources = $vals['resources'];
@@ -368,68 +379,75 @@ class TweetStruct {
           break;
         case 3:
           if ($ftype == TType::STRING) {
-            $xfer += $input->readString($this->title);
-          } else {
-            $xfer += $input->skip($ftype);
-          }
-          break;
-        case 4:
-          if ($ftype == TType::STRING) {
             $xfer += $input->readString($this->content);
           } else {
             $xfer += $input->skip($ftype);
           }
           break;
-        case 5:
-          if ($ftype == TType::STRING) {
-            $xfer += $input->readString($this->tags);
-          } else {
-            $xfer += $input->skip($ftype);
-          }
-          break;
-        case 6:
-          if ($ftype == TType::I32) {
-            $xfer += $input->readI32($this->type);
-          } else {
-            $xfer += $input->skip($ftype);
-          }
-          break;
-        case 7:
-          if ($ftype == TType::STRING) {
-            $xfer += $input->readString($this->f_catalog);
-          } else {
-            $xfer += $input->skip($ftype);
-          }
-          break;
-        case 8:
-          if ($ftype == TType::STRING) {
-            $xfer += $input->readString($this->s_catalog);
-          } else {
-            $xfer += $input->skip($ftype);
-          }
-          break;
-        case 9:
+        case 4:
           if ($ftype == TType::I64) {
             $xfer += $input->readI64($this->ctime);
           } else {
             $xfer += $input->skip($ftype);
           }
           break;
-        case 10:
+        case 5:
           if ($ftype == TType::I64) {
             $xfer += $input->readI64($this->dtime);
           } else {
             $xfer += $input->skip($ftype);
           }
           break;
-        case 11:
+        case 6:
           if ($ftype == TType::STRING) {
             $xfer += $input->readString($this->resource_id);
           } else {
             $xfer += $input->skip($ftype);
           }
           break;
+        case 7:
+          if ($ftype == TType::DOUBLE) {
+            $xfer += $input->readDouble($this->score);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 8:
+          if ($ftype == TType::DOUBLE) {
+            $xfer += $input->readDouble($this->lon);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 9:
+          if ($ftype == TType::DOUBLE) {
+            $xfer += $input->readDouble($this->lat);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 10:
+          if ($ftype == TType::I32) {
+            $xfer += $input->readI32($this->achievement_type);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 11:
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->achievement_name);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
         case 12:
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->current_poi_name);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 13:
           if ($ftype == TType::LST) {
             $this->resources = array();
             $_size0 = 0;
@@ -470,56 +488,61 @@ class TweetStruct {
       $xfer += $output->writeI32($this->uid);
       $xfer += $output->writeFieldEnd();
     }
-    if ($this->title !== null) {
-      $xfer += $output->writeFieldBegin('title', TType::STRING, 3);
-      $xfer += $output->writeString($this->title);
-      $xfer += $output->writeFieldEnd();
-    }
     if ($this->content !== null) {
-      $xfer += $output->writeFieldBegin('content', TType::STRING, 4);
+      $xfer += $output->writeFieldBegin('content', TType::STRING, 3);
       $xfer += $output->writeString($this->content);
       $xfer += $output->writeFieldEnd();
     }
-    if ($this->tags !== null) {
-      $xfer += $output->writeFieldBegin('tags', TType::STRING, 5);
-      $xfer += $output->writeString($this->tags);
-      $xfer += $output->writeFieldEnd();
-    }
-    if ($this->type !== null) {
-      $xfer += $output->writeFieldBegin('type', TType::I32, 6);
-      $xfer += $output->writeI32($this->type);
-      $xfer += $output->writeFieldEnd();
-    }
-    if ($this->f_catalog !== null) {
-      $xfer += $output->writeFieldBegin('f_catalog', TType::STRING, 7);
-      $xfer += $output->writeString($this->f_catalog);
-      $xfer += $output->writeFieldEnd();
-    }
-    if ($this->s_catalog !== null) {
-      $xfer += $output->writeFieldBegin('s_catalog', TType::STRING, 8);
-      $xfer += $output->writeString($this->s_catalog);
-      $xfer += $output->writeFieldEnd();
-    }
     if ($this->ctime !== null) {
-      $xfer += $output->writeFieldBegin('ctime', TType::I64, 9);
+      $xfer += $output->writeFieldBegin('ctime', TType::I64, 4);
       $xfer += $output->writeI64($this->ctime);
       $xfer += $output->writeFieldEnd();
     }
     if ($this->dtime !== null) {
-      $xfer += $output->writeFieldBegin('dtime', TType::I64, 10);
+      $xfer += $output->writeFieldBegin('dtime', TType::I64, 5);
       $xfer += $output->writeI64($this->dtime);
       $xfer += $output->writeFieldEnd();
     }
     if ($this->resource_id !== null) {
-      $xfer += $output->writeFieldBegin('resource_id', TType::STRING, 11);
+      $xfer += $output->writeFieldBegin('resource_id', TType::STRING, 6);
       $xfer += $output->writeString($this->resource_id);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->score !== null) {
+      $xfer += $output->writeFieldBegin('score', TType::DOUBLE, 7);
+      $xfer += $output->writeDouble($this->score);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->lon !== null) {
+      $xfer += $output->writeFieldBegin('lon', TType::DOUBLE, 8);
+      $xfer += $output->writeDouble($this->lon);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->lat !== null) {
+      $xfer += $output->writeFieldBegin('lat', TType::DOUBLE, 9);
+      $xfer += $output->writeDouble($this->lat);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->achievement_type !== null) {
+      $xfer += $output->writeFieldBegin('achievement_type', TType::I32, 10);
+      $xfer += $output->writeI32($this->achievement_type);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->achievement_name !== null) {
+      $xfer += $output->writeFieldBegin('achievement_name', TType::STRING, 11);
+      $xfer += $output->writeString($this->achievement_name);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->current_poi_name !== null) {
+      $xfer += $output->writeFieldBegin('current_poi_name', TType::STRING, 12);
+      $xfer += $output->writeString($this->current_poi_name);
       $xfer += $output->writeFieldEnd();
     }
     if ($this->resources !== null) {
       if (!is_array($this->resources)) {
         throw new TProtocolException('Bad type in structure.', TProtocolException::INVALID_DATA);
       }
-      $xfer += $output->writeFieldBegin('resources', TType::LST, 12);
+      $xfer += $output->writeFieldBegin('resources', TType::LST, 13);
       {
         $output->writeListBegin(TType::STRUCT, count($this->resources));
         {
@@ -1912,6 +1935,150 @@ class SetMsgDelRequest {
     if ($this->msg_id !== null) {
       $xfer += $output->writeFieldBegin('msg_id', TType::I32, 1);
       $xfer += $output->writeI32($this->msg_id);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
+class FriendMsgRequest {
+  static $_TSPEC;
+
+  /**
+   * @var int
+   */
+  public $uid = null;
+  /**
+   * @var int
+   */
+  public $tid = null;
+  /**
+   * @var int
+   */
+  public $msg_type = null;
+  /**
+   * @var int
+   */
+  public $timestamp = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'uid',
+          'type' => TType::I32,
+          ),
+        2 => array(
+          'var' => 'tid',
+          'type' => TType::I64,
+          ),
+        3 => array(
+          'var' => 'msg_type',
+          'type' => TType::I32,
+          ),
+        4 => array(
+          'var' => 'timestamp',
+          'type' => TType::I64,
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['uid'])) {
+        $this->uid = $vals['uid'];
+      }
+      if (isset($vals['tid'])) {
+        $this->tid = $vals['tid'];
+      }
+      if (isset($vals['msg_type'])) {
+        $this->msg_type = $vals['msg_type'];
+      }
+      if (isset($vals['timestamp'])) {
+        $this->timestamp = $vals['timestamp'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'FriendMsgRequest';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::I32) {
+            $xfer += $input->readI32($this->uid);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 2:
+          if ($ftype == TType::I64) {
+            $xfer += $input->readI64($this->tid);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 3:
+          if ($ftype == TType::I32) {
+            $xfer += $input->readI32($this->msg_type);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 4:
+          if ($ftype == TType::I64) {
+            $xfer += $input->readI64($this->timestamp);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('FriendMsgRequest');
+    if ($this->uid !== null) {
+      $xfer += $output->writeFieldBegin('uid', TType::I32, 1);
+      $xfer += $output->writeI32($this->uid);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->tid !== null) {
+      $xfer += $output->writeFieldBegin('tid', TType::I64, 2);
+      $xfer += $output->writeI64($this->tid);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->msg_type !== null) {
+      $xfer += $output->writeFieldBegin('msg_type', TType::I32, 3);
+      $xfer += $output->writeI32($this->msg_type);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->timestamp !== null) {
+      $xfer += $output->writeFieldBegin('timestamp', TType::I64, 4);
+      $xfer += $output->writeI64($this->timestamp);
       $xfer += $output->writeFieldEnd();
     }
     $xfer += $output->writeFieldStop();

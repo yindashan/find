@@ -29,7 +29,7 @@ class Offclient{
     * @Return : boolean
     */
     public function connect() {
-        $this->socket = new TSocket('mhback1', 9027);
+        $this->socket = new TSocket('mhback1', 9030);
         $this->socket->setSendTimeout(10000);
         $this->socket->setRecvTimeout(20000);
 
@@ -151,6 +151,23 @@ class Offclient{
             $this->dis_connect();
         } catch (Exception $e) {
             log_message('error', __FILE__.':'.__LINE__.'set sys msg delete error, msg['.$e->getMessage().']'); 
+        }
+    }
+
+    public function UpdateFriendQueue($params) {
+        try {
+            $request = new \offhub\FriendMsgRequest();
+            $request->uid = isset($params['uid']) ? $params['uid'] : 0;
+            $request->tid = isset($params['tid']) ? $params['tid'] : 0;
+            $request->msg_type = isset($params['msg_type']) ? $params['msg_type'] : 0;
+            $request->timestamp = isset($params['timestamp']) ? $params['timestamp'] : time();
+
+            $this->connect();
+            $this->client->UpdateFriendQueue($request);
+            $this->dis_connect();
+        } catch (Exception $e) {
+            log_message('error', __METHOD__.':'.__LINE__
+                    .'update friend queue error, msg['.$e->getMessage().']');
         }
     }
 

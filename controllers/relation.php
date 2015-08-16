@@ -73,19 +73,19 @@ class Relation extends MY_Controller {
         $is_bigger = $followee_uid > $follower_uid;
         $is_mutual = 0;
         if (!$res) {
-            $is_mutual = $this::ONE_WAY_FOLLOW;
+            $is_mutual = ONE_WAY_FOLLOW;
         } else {
             $is_a_follow_b = $res['a_follow_b'] != 0;
             $is_b_follow_a = $res['b_follow_a'] != 0;
             $is_mutual = $is_bigger ? $is_b_follow_a : $is_a_follow_b;      // 看对称的情况
-            $is_mutual = $is_mutual ? $this::MUTUAL_FOLLOW : $this::ONE_WAY_FOLLOW;
+            $is_mutual = $is_mutual ? MUTUAL_FOLLOW : ONE_WAY_FOLLOW;
             $cur_followed_status = $is_bigger ? $is_a_follow_b : $is_b_follow_a;    // 当前情况
         }
 
         if (!$res) {
             // insert relation
             $res = $this->Relation_model->insert($follower_uid, $followee_uid, time(), array(
-                'friend_type'   => $this::NO_FRIEND));
+                'friend_type'   => NO_FRIEND));
             if (false === $res) {
                 log_message('error', __FILE__.':'.__LINE__.' insert relation failed, '
                     .'follower_uid='.strval($follower_uid).' followee_uid='.strval($followee_uid));
@@ -231,9 +231,10 @@ class Relation extends MY_Controller {
                 continue;
             }
             $user_info['uid'] = $id;
-            $user_info['follow_type'] = $row['follow_type'] ? $this::MUTUAL_FOLLOW : $this::ONE_WAY_FOLLOW;
+            $user_info['follow_type'] = $row['follow_type'] ? MUTUAL_FOLLOW : ONE_WAY_FOLLOW;
             $user_info['name'] =  $user_detail['sname'];
             $user_info['avatar'] =  $user_detail['avatar'];
+            $user_info['intro'] = $user_detail['intro'];
             $user_info['followee_num'] = intval($user_ext_info['followee_num']);
             $user_info['follower_num'] = intval($user_ext_info['follower_num']);
             $user_info['tweet_num'] = intval($user_ext_info['tweet_num']);
@@ -287,9 +288,10 @@ class Relation extends MY_Controller {
                 continue;
             }
             $user_info['uid'] = $id;
-            $user_info['follow_type'] = $row['follow_type'] ? $this::MUTUAL_FOLLOW : $this::NO_FOLLOW;
+            $user_info['follow_type'] = $row['follow_type'] ? MUTUAL_FOLLOW : NO_FOLLOW;
             $user_info['name'] =  $user_detail['sname'];
             $user_info['avatar'] =  $user_detail['avatar'];
+            $user_info['intro'] = $user_detail['intro'];
             $user_info['followee_num'] = intval($user_ext_info['followee_num']);
             $user_info['follower_num'] = intval($user_ext_info['follower_num']);
             $user_info['tweet_num'] = intval($user_ext_info['tweet_num']);
