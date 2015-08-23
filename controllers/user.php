@@ -188,16 +188,12 @@ class User extends MY_Controller {
             $approval_num = 0;
         }
         $user_info_res['approval_num'] = $approval_num;
-        
-		
+         
+
         // 7. get timeline/photo/achievement
-        //$user_info_res['sex'] = 1; // 1:男，2:女 user_ext_info里面已包含sex信息
-        //$user_info_res['timeline_num'] = 23;
-        //$user_info_res['photo_num'] = 11;
-        //$user_info_res['achievement_num'] = 935;
         $user_info_res['timeline_num'] = $this->message_queue_model->get_user_queue_size($uid);
         $user_info_res['photo_num'] = $this->tweet_model->get_tweet_num($uid);
-        $user_info_res['achievement_num'] = $this->tweet_model->get_achieve_tweet_num($uid);
+        $user_info_res['achievement_num'] = $this->tweet_model->get_achieve_tweet_num($uid);        
 
         // 5. get others info
         if ($own_info) {
@@ -250,6 +246,21 @@ class User extends MY_Controller {
         end:
             $this->renderJson($response['errno'], $response['data']);
     }
+    
+    function disabled_robot() {
+    	$request = $this->request_array;
+    	$response = $this->response_array;
+    	$uid = $request['uid'];
+    	$arr_user_req = array(
+    			'robot_status' => 0,
+    	);
+    	$ret = $this->user_detail_model->update_info_by_uid($uid, $arr_user_req);
+    	$this->response['data'] = array(
+    			'uid'   => $uid,
+    	);
+    	$this->renderJson(STATUS_OK, $this->response['data']);
+    	
+    }
 
     function modify_user_info() {
         $request = $this->request_array;
@@ -274,6 +285,12 @@ class User extends MY_Controller {
         }
         if (isset($request['sex'])) {
             $mysql_req['sex'] = $request['sex'];
+        }
+        if (isset($request['city'])) {
+            $mysql_req['city'] = $request['city'];
+        }
+        if (isset($request['province'])) {
+            $mysql_req['province'] = $request['province'];
         }
 
         if (empty($mysql_req)) {
@@ -650,12 +667,13 @@ class User extends MY_Controller {
         }
 
         $register_status = intval($result['register_status']);
+        $ret_status = STATUS_OK;
         if (0 !== $register_status) {
             switch ($register_status) {
             case 2:
                 log_message('error', __METHOD__.':'.__LINE__.' user detail lacked, status='.$register_status);
-                $this->renderJson(USER_DETAIL_LACK);
-                return ;
+                $ret_status = USER_DETAIL_LACK;
+                break;
             default:
                 log_message('error', __METHOD__.':'.__LINE__.' unkown register_status = '.$result['register_status']);
                 $this->renderJson(STATUS_ERR_RESPONSE);
@@ -665,9 +683,7 @@ class User extends MY_Controller {
 
         // return info
         $arr_response = array();
-        $arr_response['data'] = array(
-            'uid'   => $uid,
-        );
+        $arr_response['uid'] = $uid;
 
         // TODO: need ip
         $user_token = $this->create_token($uid, '');
@@ -676,10 +692,7 @@ class User extends MY_Controller {
         }
         $arr_response['token'] = $user_token;
 
-        $response['errno'] = 0;
-        $response['data'] = $arr_response;
-
-        $this->renderJson($response['errno'], $response['data']);
+        $this->renderJson($ret_status, $arr_response);
     }
 
     function third_part_login() {
@@ -725,7 +738,7 @@ class User extends MY_Controller {
             'oauth_type'    => $request['oauth_type'],
             'oauth_key'     => $request['oauth_key'],
             'login_type'    => 1,
-            'register_status'   => 0,
+            'register_status'   => 2,
             'create_time'   => time(),
         );
         $arr_user_detail_req = array(
@@ -736,22 +749,28 @@ class User extends MY_Controller {
 
         // check is a new user or not
         $is_new = false;
-        $uid = $this->user_model->get_uid_by_oauth($arr_user_req['oauth_type'], $arr_user_req['oauth_key']);
-        if (false === $uid) {
+        $user_info = $this->user_model->get_user_by_oauth($arr_user_req['oauth_type'], $arr_user_req['oauth_key']);
+        $register_status = 2;
+        if (false === $user_info) {
             log_message('error', __METHOD__.':'.__LINE__.' get_uid_by_oauth error.');
             $this->renderJson(MYSQL_ERR_CONNECT);
             return ;
         }
-        if (NULL === $uid) {
+        if (NULL === $user_info) {
             log_message('debug', __METHOD__.':'.__LINE__.' it\'s a new user.');
             $is_new = true;
+        } else {
+            $uid = $user_info['id'];
+            $register_status = intval($user_info['register_status']);
         }
 
         // a new user
         if ($is_new) {
             // random a new sname
+            /* 显示调用修改资料接口,所以直接入库,由ci_user表控制用户合法性
             $sname = $this->_random_sname($arr_user_detail_req['sname']);
             $arr_user_detail_req['sname'] = $sname;
+             */
 
             // get base info
             $uid = $this->user_model->add($arr_user_req);
@@ -782,19 +801,20 @@ class User extends MY_Controller {
             log_message('debug', __METHOD__.':'.__LINE__.' new user, uid='.$uid);
         }
 
-        // get detail info
-        /*
-        $arr_user_detail = $this->get_user_detail_by_uid($uid);
-        if (false === $arr_user_detail) {
-            log_message('error', __FILE__.':'.__LINE__.' user_detail get_user_detail_by_uid error, uid='.$uid);
-            $this->renderJson(MYSQL_ERR_CONNECT);
-            return ;
+        // check detail lack
+        $ret_status = STATUS_OK;
+        if (0 !== $register_status) {
+            switch ($register_status) {
+            case 2:
+                log_message('error', __METHOD__.':'.__LINE__.' user detail lacked, status='.$register_status);
+                $ret_status = USER_DETAIL_LACK;
+                break;
+            default:
+                log_message('error', __METHOD__.':'.__LINE__.' unkown register_status = '.$result['register_status']);
+                $this->renderJson(STATUS_ERR_RESPONSE);
+                return ;
+            }
         }
-        if (NULL === $arr_user_detail) {
-            log_message('error', __FILE__.':'.__LINE__.' user_detail not affect rows, uid='.$uid);
-            $this->renderJson(MYSQL_ERR_INSERT);
-            return ;
-        }*/
 
         // TODO: need ip
         $user_token = $this->create_token($uid, '');
@@ -804,13 +824,12 @@ class User extends MY_Controller {
             //return ;
         }
         // return info
-        $response['errno'] = 0;
-        $response['data'] = array(
+        $arr_response = array(
             'uid'   => $uid,
             'token' => $user_token,
         );
 
-        $this->renderJson($response['errno'], $response['data']);
+        $this->renderJson($ret_status, $arr_response);
     }
 
     function create_token($uid, $ip = '') {

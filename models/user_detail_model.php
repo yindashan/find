@@ -87,4 +87,44 @@ class User_detail_model extends CI_Model {
         return true;
     }
 
+    function get_user_list($keyword, $avatar_type = 0) {
+        $mysql_ret = $this->db
+            ->query("select * from ci_user_detail where sname like '%$keyword%'")
+            ->result_array();
+        if (false === $mysql_ret) {
+            return false;
+        }
+
+        foreach ($mysql_ret as &$user_detail_info) {
+            if (isset($user_detail_info['avatar'])) {
+                switch ($avatar_type) {
+                case 0:
+                    $arr_img_info = json_decode($user_detail_info['avatar'], true);
+                    if ($arr_img_info 
+                        && isset($arr_img_info['img']) 
+                        && isset($arr_img_info['img']['s']) 
+                        && isset($arr_img_info['img']['s']['url'])) {
+                            $user_detail_info['avatar'] = $arr_img_info['img']['s']['url'];
+                        } else  {
+                            $user_detail_info['avatar'] = "";
+                        }
+                    break;
+                case 1:
+                    $arr_img_info = json_decode($user_detail_info['avatar'], true);
+                    if ($arr_img_info 
+                        && isset($arr_img_info['img'])
+                        && isset($arr_img_info['img']['n']) 
+                        && isset($arr_img_info['img']['n']['url'])) {
+                            $user_detail_info['avatar'] = $arr_img_info['img']['n']['url'];
+                        } else {
+                            $user_detail_info['avatar'] ="";
+                        }
+                    break;
+                }
+            }
+        }
+
+        return $mysql_ret;
+    }
+
 }
