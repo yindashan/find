@@ -251,10 +251,13 @@ class User extends MY_Controller {
     	$request = $this->request_array;
     	$response = $this->response_array;
     	$uid = $request['uid'];
+    	$uid_array = explode(',', $uid);
     	$arr_user_req = array(
     			'robot_status' => 0,
     	);
-    	$ret = $this->user_detail_model->update_info_by_uid($uid, $arr_user_req);
+    	foreach ($uid_array as $item) {
+	    	$ret = $this->user_detail_model->update_info_by_uid($item, $arr_user_req);
+    	}
     	$this->response['data'] = array(
     			'uid'   => $uid,
     	);
